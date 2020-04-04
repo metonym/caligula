@@ -1,5 +1,8 @@
 # caligula
 
+[![NPM][npm]][npm-url]
+[![Build][build]][build-badge]
+
 > Optimize CSS stylesheets for your Svelte apps.
 
 This library statically analyzes and extracts class selectors from Svelte components using the [svelte compiler](https://svelte.dev/docs#Compile_time). Given an external CSS file, the library outputs an optimized stylesheet by removing unused class rules.
@@ -141,3 +144,8 @@ caligula({
 ## License
 
 [MIT](LICENSE)
+
+[npm]: https://img.shields.io/npm/v/caligula.svg?color=blue
+[npm-url]: https://npmjs.com/package/caligula
+[build]: https://travis-ci.com/metonym/caligula.svg?branch=master
+[build-badge]: https://travis-ci.com/metonym/caligula
