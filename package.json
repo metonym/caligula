@@ -41,8 +41,9 @@
   "keywords": [
     "svelte",
     "stylesheet",
-    "classes",
-    "optimize"
+    "css classes",
+    "optimize",
+    "prototyping"
   ],
   "files": [
     "lib"

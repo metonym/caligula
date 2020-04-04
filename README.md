@@ -1,3 +1,5 @@
+<img alt="Caligula logo, portrait bust of emperor Caligula" src="artwork/caligula-logo.jpg" width="250">
+
 # caligula
 
 [![NPM][npm]][npm-url]
