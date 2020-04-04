@@ -1,6 +1,6 @@
 {
   "name": "caligula",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "description": "Optimize CSS stylesheets for your Svelte apps",
   "author": "Eric Liu (https://github.com/metonym)",
