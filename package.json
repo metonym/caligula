@@ -1,0 +1,46 @@
+{
+  "name": "caligula",
+  "version": "0.1.1",
+  "license": "MIT",
+  "description": "Optimize CSS stylesheets for your Svelte apps",
+  "author": "Eric Liu (https://github.com/metonym)",
+  "main": "lib/index.js",
+  "types": "lib/index.d.js",
+  "scripts": {
+    "develop": "tsnd --respawn src",
+    "build": "tsc",
+    "prepublishOnly": "tsc"
+  },
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "cssnano": "^4.1.10",
+    "cssom": "^0.4.4",
+    "fast-glob": "^3.2.2",
+    "svelte": "^3.20.1"
+  },
+  "devDependencies": {
+    "@types/cssnano": "^4.0.0",
+    "@types/cssom": "^0.4.0",
+    "@types/node": "^13.9.6",
+    "ts-node-dev": "^1.0.0-pre.44",
+    "typescript": "^3.8.3"
+  },
+  "prettier": {
+    "printWidth": 120
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metonym/caligula.git"
+  },
+  "homepage": "https://github.com/metonym/caligula",
+  "bugs": "https://github.com/metonym/caligula/issues",
+  "keywords": [
+    "svelte",
+    "stylesheet",
+    "classes",
+    "optimize"
+  ],
+  "files": [
+    "lib"
+  ]
+}
