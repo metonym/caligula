@@ -4,6 +4,15 @@
 
 This library statically analyzes and extracts class selectors from Svelte components using the [svelte compiler](https://svelte.dev/docs#Compile_time). Given an external CSS file, the library outputs an optimized stylesheet by removing unused class rules.
 
+**Table of Contents**
+
+- [Motivation](#motivation)
+  - [Against Preprocessors](#against-preprocessors)
+- [Usage](#usage)
+  - [Output](#output)
+- [API](#api)
+- [License](#license)
+
 ## Motivation
 
 One of the quickest ways to style Svelte applications (or web apps in general) is to define an external CSS stylesheet in the HTML `head` tag.
@@ -48,12 +57,6 @@ This has two main drawbacks:
 
 - **Extra build configuration**: Using CSS preprocessors involves additional tooling and set-up. This is overkill, especially for rapid prototyping.
 - **Still a manual process**: SASS partials must be manually added or removed, which can be inefficient and error prone.
-
-## Getting Started
-
-```bash
-yarn add -D caligula
-```
 
 ## Usage
 
