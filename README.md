@@ -1,4 +1,4 @@
-<img alt="Caligula logo, portrait bust of emperor Caligula" src="artwork/caligula-logo.jpg" width="250">
+<img alt="Caligula logo, portrait bust of emperor Caligula" src="artwork/caligula-logo.jpg" width="200" />
 
 # caligula
 
