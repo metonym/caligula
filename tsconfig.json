@@ -1,13 +1,18 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "lib": ["esnext", "DOM"],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "outDir": "lib",
+    "noEmit": true,
+    "target": "ESNext",
+    "module": "preserve",
     "strict": true,
+    "erasableSyntaxOnly": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
-    "target": "es5"
+    "resolveJsonModule": true,
+    "paths": {
+      "caligula": ["./src/index.ts"]
+    },
+    "types": ["jest"]
   },
-  "include": ["src"]
+  "include": ["bench", "scripts", "src", "tests"]
 }

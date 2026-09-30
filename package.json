@@ -1,51 +1,50 @@
 {
   "name": "caligula",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
-  "description": "Optimize CSS stylesheets for your Svelte apps",
+  "description": "Zero-dependency CSS filter: remove rules and rewrite selectors with PostCSS-identical output, 6-13x faster than PostCSS.",
   "author": "Eric Liu (https://github.com/metonym)",
-  "main": "lib/index.js",
-  "types": "lib/index.d.js",
-  "engines": {
-    "node": ">=10",
-    "yarn": ">=1"
-  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "develop": "tsnd --respawn src",
-    "build": "tsc",
-    "prepublishOnly": "tsc"
-  },
-  "dependencies": {
-    "chalk": "^4.0.0",
-    "cssnano": "^4.1.10",
-    "cssom": "^0.4.4",
-    "fast-glob": "^3.2.2",
-    "svelte": "^3.20.1"
+    "build": "bun scripts/build.ts",
+    "test": "bun test --parallel ./tests",
+    "test:package": "bun scripts/test-package.ts",
+    "bench": "ostia bench bench/filter.bench.ts",
+    "bench:caligula": "ostia bench bench/caligula.bench.ts",
+    "bench:ab": "bun bench/ab.ts",
+    "bench:mem": "bun bench/mem.ts",
+    "bench:cold": "bun bench/cold.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome ci --error-on-warnings",
+    "lint:fix": "biome check --write --unsafe ."
   },
   "devDependencies": {
-    "@types/cssnano": "^4.0.0",
-    "@types/cssom": "^0.4.0",
-    "@types/node": "^13.9.6",
-    "ts-node-dev": "^1.0.0-pre.44",
-    "typescript": "^3.8.3"
-  },
-  "prettier": {
-    "printWidth": 120
+    "@biomejs/biome": "2.5.15",
+    "@types/bun": "^1.4.2",
+    "@types/jest": "^30.0.0",
+    "@typescript/typescript6": "^6.0.2",
+    "bootstrap": "5.3.8",
+    "carbon-components-svelte": "0.112.1",
+    "lightningcss": "1.33.0",
+    "ostia": "^0.2.7",
+    "postcss": "^8.5.28",
+    "postcss-discard-empty": "^9.0.2",
+    "source-map-js": "^1.2.2"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metonym/caligula.git"
+    "url": "git+https://github.com/metonym/caligula.git"
   },
-  "homepage": "https://github.com/metonym/caligula",
-  "bugs": "https://github.com/metonym/caligula/issues",
   "keywords": [
-    "svelte",
-    "stylesheet",
-    "css classes",
-    "optimize",
-    "prototyping"
-  ],
-  "files": [
-    "lib"
+    "css",
+    "postcss",
+    "filter",
+    "purge",
+    "unused-css",
+    "source-map",
+    "zero-dependency"
   ]
 }
