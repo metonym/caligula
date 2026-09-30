@@ -60,20 +60,28 @@ Changes to `src/` must not make things slower. The workloads live in `bench/work
 
 | Command | Use |
 |:---|:---|
-| `bun run bench:ab [ref]` | **The regression check.** Runs a git ref (default `HEAD`) and the working tree alternately in one process, re-checks anything flagged in fresh processes, and fails on a confirmed regression over 10% or a geomean over 1.5%. Also lists workloads whose output changed. |
-| `bun run bench:caligula` | Per-workload numbers with ostia (add `--cpu` for profiles, `--filter` to narrow) |
-| `bun run bench:mem [src dir]` | Peak memory per call, fresh process per case |
+| `bun run bench:ab` | **The regression check** (`ostia ab`). Runs `HEAD` (or `--base <ref>`) and the working tree alternately in one process, re-checks anything flagged in fresh processes, and fails on a confirmed regression over 10% or a geomean over 1.5%. Also lists workloads whose output changed, so tasks return `filterCss`'s result. Narrow with `--filter 'source map' --rounds 21`. |
+| `bun run bench:caligula` | Per-workload numbers with ostia (`--filter` to narrow, `--alloc` for retained heap per call: a leak check, ~0 is correct) |
+| `bun run bench:mem` | Peak memory (`--peak-mem`) of the `memory:` workloads: how far the first call raises RSS, median of 3 fresh processes, after warming the JIT on a 20 kB slice |
 | `bun run bench:cold [src dir]` | First-call latency, fresh process per stylesheet |
 | `bun run bench` | caligula vs PostCSS vs Lightning CSS (the README table) |
 
-Commit first, then run `bun run bench:ab` against the commit before your change. Don't trust numbers from two runs minutes apart, including `ostia compare` on saved documents: machine load drifts too much.
+Commit first, then run `bun run bench:ab` against the commit before your change (`--base <ref>` for anything older than `HEAD`). Don't trust numbers from two runs minutes apart, including `ostia compare` on saved documents: machine load drifts too much.
 
 Pitfalls seen before:
 - **`for…of` allocates an iterator** before the JIT's top tier compiles the loop; use indexed loops in tree walks.
 - **Reading the end of a string built with `+=` flattens it**, which makes a loop quadratic; track the last character separately.
 - **Walking every ancestor per removal** costs removals × depth; stop at the first node already marked.
 - **`String#repeat` returns a rope**; flatten test inputs before timing or measuring memory.
-- **Short tasks need fine CPU sampling**; ostia's default 1 ms interval is too coarse for a 3 ms call. Use `profile()` from ostia with `intervalUs: 100`.
+- **Profile one workload at a time.** `--cpu` samples every 100µs, about 2,000 samples per task:
+
+  ```sh
+  bun run bench:caligula --cpu --filter 'carbon.*remove most rules$' --export-json cpu.json
+  bunx ostia report cpu.json --format collapsed
+  ```
+
+  Inlined helpers count as their callers' self time, so a helper missing from the profile is in its callers.
+- **Module-scope work in the suite hides `--peak-mem` readings**: memory it freed gets reused by the measured call. `bench/caligula.bench.ts` skips `checkWorkload` when `OSTIA_PEAK_MEM` is set; keep new setup behind that gate too.
 
 ## Style
 
