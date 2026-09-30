@@ -1,5 +1,5 @@
 import type { FilterOptions, filterCss } from "caligula";
-import { BOOTSTRAP_MIN, CORPORA } from "./corpora";
+import { BOOTSTRAP_MIN, CARBON, CORPORA, UTILITIES } from "./corpora";
 
 export type Workload = {
   group: string;
@@ -7,6 +7,8 @@ export type Workload = {
   css: string;
   options: FilterOptions;
   expect: { skipped?: boolean; edits?: boolean };
+  /** A small input to warm the JIT on before a first-call measurement. */
+  warmup?: string;
 };
 
 type Filter = typeof filterCss;
@@ -126,4 +128,24 @@ for (const [name, css] of ADVERSARIAL) {
     options: { rule: ({ selector }) => selector !== ".a" },
     expect: {},
   });
+}
+
+// Peak memory of one call (`bun run bench:mem`); `repeat` returns a rope, so flatten it.
+for (const [label, corpus, copies] of [
+  ["carbon", CARBON, 4],
+  ["bootstrap.min", BOOTSTRAP_MIN, 16],
+  ["utilities", UTILITIES, 16],
+] as const) {
+  const css = corpus.css.repeat(copies);
+  css.charCodeAt(css.length - 1);
+  const group = `memory: ${label} x${copies}, ${kb(css)}`;
+  const warmup = corpus.css.slice(0, 20_000);
+  const removeMost: FilterOptions["rule"] = ({ selector }) =>
+    corpus.keep.test(selector) || false;
+  const add = (name: string, options: FilterOptions, edits: boolean) => {
+    WORKLOADS.push({ group, name, css, options, expect: { edits }, warmup });
+  };
+  add("round trip", {}, false);
+  add("remove most", { rule: removeMost }, true);
+  add("remove most + map", { rule: removeMost, map: true }, true);
 }
