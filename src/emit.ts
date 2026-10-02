@@ -1,3 +1,4 @@
+import { SEMICOLON } from "./chars";
 import type { SourceMapBuilder } from "./source-map";
 import {
   type Child,
@@ -13,20 +14,16 @@ import {
   N_RULE,
 } from "./tree";
 
-const SEMICOLON = 0x3b;
-
 export class Emitter {
-  css: string;
-  decls: Decls;
-  out: string[];
-  cursor: number;
-  map: SourceMapBuilder | null;
+  private css: string;
+  private decls: Decls;
+  private map: SourceMapBuilder | null;
+  private out: string[] = [];
+  private cursor = 0;
 
   constructor(css: string, decls: Decls, map: SourceMapBuilder | null) {
     this.css = css;
     this.decls = decls;
-    this.out = [];
-    this.cursor = 0;
     this.map = map;
   }
 
@@ -86,8 +83,7 @@ export class Emitter {
         continue;
       }
 
-      // PostCSS hands a removed first root node's leading whitespace to the
-      // node that takes its place.
+      // The first root node's leading whitespace passes to its successor.
       const inherits = inherited !== null && i === 0;
       if (inherits) {
         this.copy(inherited.before, inherited.start);
@@ -98,8 +94,7 @@ export class Emitter {
 
       if (typeof node === "number") {
         const flags = decls.flags[node];
-        // A custom property keeps its `;` before a comment unless the text
-        // before it ends with a stray `;`.
+        // A custom property keeps its `;` unless a stray `;` precedes it.
         const afterSemi = inherits
           ? inherited.start > inherited.before &&
             this.css.charCodeAt(inherited.start - 1) === SEMICOLON
@@ -111,10 +106,10 @@ export class Emitter {
           semicolon || (forced && hasNext),
         );
       } else if (node.type === N_RULE) {
-        if (node.selector !== null) {
-          this.flush(node.a);
-          this.insert(node.selector, node.a);
-          this.cursor = node.b;
+        if (node.rewritten) {
+          this.flush(node.textStart);
+          this.insert(node.text as string, node.textStart);
+          this.cursor = node.textEnd;
         }
         this.body(node);
       } else if (node.type === N_AT_BLOCK) {

@@ -12,7 +12,7 @@ bun run test          # unit, PostCSS parity, hostile inputs, fuzzer
 bun run test:package  # build, pack, install, and use it as a consumer would
 bun run typecheck
 bun run lint          # biome; `bun run lint:fix` formats and applies fixes
-bun run build         # dist/: minified ESM, bundled index.d.ts, slimmed package.json
+bun run build         # dist/: minified ESM, index.d.ts, slimmed package.json
 ```
 
 ## How it works
@@ -22,7 +22,7 @@ bun run build         # dist/: minified ESM, bundled index.d.ts, slimmed package
 1. **Scan** (`src/scan.ts`). `Scanner#next()` reads one token and leaves its kind and `[from, to)` span on the scanner. It carries two pieces of state across the whole input that decide how a `(` is read (the `url(` lookbehind and the last unsafe paren span).
 2. **Parse** (`src/parse.ts`). `Parser` works one statement at a time: the first token picks the kind (comment, at-rule, stray `;`, `}`, empty `{`, declaration or rule), then it records tokens up to the terminator and builds the node from that record. Rules, at-rules and comments become `CssNode`s (`src/tree.ts`). Declarations are rows in the struct-of-arrays `Decls` store and appear in their container's `nodes` as numbers. Anything the parser can't reproduce exactly, and every syntax error, throws `BAIL`.
 3. **Visit** (`src/index.ts`, `Filter`). It walks in PostCSS's order (visitor, then children), then replays PostCSS's revisit loop: a rewritten rule, and the parent of a removed node, are marked dirty and walked again until nothing is dirty. Then it applies `postcss-discard-empty`'s container rule.
-4. **Emit** (`src/emit.ts`). It copies kept source spans, skips removed nodes with their leading trivia, inserts rewritten selectors, and adds or drops `;` per the stringifier's rules. Every chunk goes through `copy`/`insert`, which is where `src/source-map.ts` gets its segments.
+4. **Emit** (`src/emit.ts`). It copies kept source spans, skips removed nodes with their leading trivia, inserts rewritten selectors, and adds or drops `;` per the stringifier's rules. Every chunk goes through `copy`/`insert`, which is where `src/source-map.ts` gets its segments. `src/chars.ts` holds the shared character codes.
 
 ## Rules every change must keep
 
@@ -30,7 +30,7 @@ bun run build         # dist/: minified ESM, bundled index.d.ts, slimmed package
 - **Bail rather than guess.** When the parser can't be sure of PostCSS's reading, it throws `BAIL` and the input passes through unchanged (`skipped: true`). Every PostCSS syntax error must bail. Bailing on ordinary CSS costs coverage: Bootstrap, Carbon and the modern-syntax cases must never bail.
 - **Original code only.** Don't copy or translate code from PostCSS or any other CSS parser. Learn PostCSS's behavior by running it (`postcss.parse`, inspecting nodes and `raws`, `toString()`) and encode it as tests. This keeps the package free of third-party license notices.
 - **No runtime dependencies and no Node APIs in `src/`.** The build targets browsers, Node, Bun and Deno alike. Dev-only code (`tests/`, `bench/`, `scripts/`) may use anything.
-- **Keep the public API small.** `src/index.ts` exports `filterCss`, `FilterOptions` and `FilterResult`, nothing else. New options must default to current behavior.
+- **Keep the public API small.** `src/index.ts` exports `filterCss` and the types it uses (`FilterOptions`, `FilterResult`, `SourceMap`), nothing else. It declares every public type, so `dist/index.d.ts` is that file's own declaration emit. New options must default to current behavior.
 
 ## Tests
 

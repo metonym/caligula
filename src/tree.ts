@@ -24,13 +24,16 @@ export class CssNode {
   flags: number;
   parent: CssNode | null;
   nodes: Child[] | null;
+  /** Start of the leading whitespace and comments. */
   before: number;
   start: number;
   end: number;
-  a: number;
-  b: number;
+  /** Selector or params span. */
+  textStart: number;
+  textEnd: number;
   name: string;
-  private text: string | null;
+  /** Comment-stripped selector or params, or the rewritten selector. */
+  text: string | null;
 
   constructor(type: number, parent: CssNode | null, before: number) {
     this.type = type;
@@ -41,8 +44,8 @@ export class CssNode {
     this.before = before;
     this.start = before;
     this.end = before;
-    this.a = 0;
-    this.b = 0;
+    this.textStart = 0;
+    this.textEnd = 0;
     this.name = "";
     this.text = null;
   }
@@ -51,6 +54,7 @@ export class CssNode {
     this.flags = on ? this.flags | flag : this.flags & ~flag;
   }
 
+  /** Has its own trailing `;`. */
   get semi(): boolean {
     return (this.flags & F_SEMI) !== 0;
   }
@@ -58,6 +62,7 @@ export class CssNode {
     this.set(F_SEMI, on);
   }
 
+  /** Container whose last child ends in `;`. */
   get semicolon(): boolean {
     return (this.flags & F_SEMICOLON) !== 0;
   }
@@ -86,24 +91,16 @@ export class CssNode {
     this.set(F_DIRTY, on);
   }
 
-  get selector(): string | null {
-    return (this.flags & F_REWRITTEN) !== 0 ? this.text : null;
+  get rewritten(): boolean {
+    return (this.flags & F_REWRITTEN) !== 0;
   }
-  set selector(text: string) {
-    this.text = text;
-    this.flags |= F_REWRITTEN;
-  }
-
-  get clean(): string | null {
-    return (this.flags & F_REWRITTEN) !== 0 ? null : this.text;
-  }
-  set clean(text: string | null) {
-    this.text = text;
+  set rewritten(on: boolean) {
+    this.set(F_REWRITTEN, on);
   }
 
   /** The selector or params as a visitor reads them. */
   read(css: string): string {
-    return this.text ?? css.slice(this.a, this.b);
+    return this.text ?? css.slice(this.textStart, this.textEnd);
   }
 }
 
@@ -122,18 +119,19 @@ export function grow<T extends Uint8Array | Int32Array>(array: T): T {
 export class Decls {
   start: Int32Array;
   propEnd: Int32Array;
-  a: Int32Array;
-  b: Int32Array;
+  valueStart: Int32Array;
+  valueEnd: Int32Array;
   end: Int32Array;
   flags: Uint8Array;
-  clean = new Map<number, string>();
+  /** Comment-stripped values, only for declarations that had comments. */
+  text = new Map<number, string>();
   count = 0;
 
   constructor(capacity: number) {
     this.start = new Int32Array(capacity);
     this.propEnd = new Int32Array(capacity);
-    this.a = new Int32Array(capacity);
-    this.b = new Int32Array(capacity);
+    this.valueStart = new Int32Array(capacity);
+    this.valueEnd = new Int32Array(capacity);
     this.end = new Int32Array(capacity);
     this.flags = new Uint8Array(capacity);
   }
@@ -141,8 +139,8 @@ export class Decls {
   push(
     start: number,
     propEnd: number,
-    a: number,
-    b: number,
+    valueStart: number,
+    valueEnd: number,
     end: number,
     flags: number,
   ): number {
@@ -150,15 +148,15 @@ export class Decls {
     if (i === this.start.length) {
       this.start = grow(this.start);
       this.propEnd = grow(this.propEnd);
-      this.a = grow(this.a);
-      this.b = grow(this.b);
+      this.valueStart = grow(this.valueStart);
+      this.valueEnd = grow(this.valueEnd);
       this.end = grow(this.end);
       this.flags = grow(this.flags);
     }
     this.start[i] = start;
     this.propEnd[i] = propEnd;
-    this.a[i] = a;
-    this.b[i] = b;
+    this.valueStart[i] = valueStart;
+    this.valueEnd[i] = valueEnd;
     this.end[i] = end;
     this.flags[i] = flags;
     this.count = i + 1;

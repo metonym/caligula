@@ -1,6 +1,6 @@
 import { Emitter } from "./emit";
 import { Parser } from "./parse";
-import { type SourceMap, SourceMapBuilder } from "./source-map";
+import { SourceMapBuilder } from "./source-map";
 import {
   BAIL,
   type Child,
@@ -29,19 +29,27 @@ export type FilterOptions = {
   map?: boolean | { source?: string; includeContent?: boolean };
 };
 
+export type SourceMap = {
+  version: 3;
+  sources: string[];
+  sourcesContent?: string[];
+  names: string[];
+  mappings: string;
+};
+
 export type FilterResult = {
   css: string;
-  /** The input was passed through unchanged: a syntax error, or input caligula can't reproduce exactly. */
+  /** The input was returned unchanged: a syntax error, or CSS caligula can't reproduce exactly. */
   skipped: boolean;
   removed: number;
   map?: SourceMap;
 };
 
 class Filter {
-  css: string;
-  decls: Decls;
-  options: FilterOptions;
   removed = 0;
+  private css: string;
+  private decls: Decls;
+  private options: FilterOptions;
 
   constructor(css: string, decls: Decls, options: FilterOptions) {
     this.css = css;
@@ -83,7 +91,8 @@ class Filter {
     if (result === false) {
       this.remove(node);
     } else if (typeof result === "string" && result !== selector) {
-      node.selector = result;
+      node.text = result;
+      node.rewritten = true;
       markDirty(node);
     }
   }
@@ -91,18 +100,36 @@ class Filter {
   private visitAtRule(node: CssNode): void {
     const visitor = this.options.atRule;
     if (!visitor) return;
-    const { css, decls } = this;
     const result = visitor({
       name: node.name,
-      params: node.read(css),
-      walkDecls(callback) {
+      params: node.read(this.css),
+      walkDecls: (callback) => {
         if (!node.readDecls) {
           throw new Error(`walkDecls: add "${node.name}" to readDecls`);
         }
-        if (node.nodes !== null) walkDecls(node.nodes, css, decls, callback);
+        if (node.nodes !== null) this.walkDecls(node.nodes, callback);
       },
     });
     if (result === false) this.remove(node);
+  }
+
+  private walkDecls(
+    nodes: Child[],
+    callback: (prop: string, value: string) => void,
+  ): void {
+    const { css, decls } = this;
+    for (let i = 0; i < nodes.length; i++) {
+      const child = nodes[i];
+      if (typeof child === "number") {
+        callback(
+          css.slice(decls.start[child], decls.propEnd[child]),
+          decls.text.get(child) ??
+            css.slice(decls.valueStart[child], decls.valueEnd[child]),
+        );
+      } else if (!child.removed && child.nodes !== null) {
+        this.walkDecls(child.nodes, callback);
+      }
+    }
   }
 
   private remove(node: CssNode): void {
@@ -112,33 +139,13 @@ class Filter {
   }
 }
 
-function walkDecls(
-  nodes: Child[],
-  css: string,
-  decls: Decls,
-  callback: (prop: string, value: string) => void,
-): void {
-  for (let i = 0; i < nodes.length; i++) {
-    const child = nodes[i];
-    if (typeof child === "number") {
-      callback(
-        css.slice(decls.start[child], decls.propEnd[child]),
-        decls.clean.get(child) ?? css.slice(decls.a[child], decls.b[child]),
-      );
-    } else if (!child.removed && child.nodes !== null) {
-      walkDecls(child.nodes, css, decls, callback);
-    }
-  }
-}
-
-// Stops at a dirty ancestor: the walk only climbs through nodes being
-// visited now, which were cleared on entry, so that one's chain is marked.
+// A dirty ancestor means its own chain is already marked.
 function markDirty(node: CssNode | null): void {
   for (let n = node; n !== null && !n.dirty; n = n.parent) n.dirty = true;
 }
 
 function discardEmpty(node: CssNode, css: string): void {
-  if (node.selector === "") {
+  if (node.rewritten && node.text === "") {
     node.removed = true;
     return;
   }
@@ -194,7 +201,13 @@ export function filterCss(
   if (builder) {
     const { source = "input.css", includeContent = true } =
       map === true ? {} : map || {};
-    result.map = builder.toJSON(source, includeContent ? css : undefined);
+    result.map = {
+      version: 3,
+      sources: [source],
+      ...(includeContent && { sourcesContent: [css] }),
+      names: [],
+      mappings: builder.mappings(),
+    };
   }
   return result;
 }
