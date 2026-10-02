@@ -19,6 +19,7 @@
     "bench:cold": "bun bench/cold.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome ci --error-on-warnings",
+    "knip": "knip-bun",
     "lint:fix": "biome check --write --unsafe ."
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "@typescript/typescript6": "^6.0.2",
     "bootstrap": "5.3.8",
     "carbon-components-svelte": "0.112.1",
+    "knip": "^6.39.0",
     "lightningcss": "1.33.0",
     "ostia": "^0.2.9",
     "postcss": "^8.5.28",
