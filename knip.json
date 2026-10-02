@@ -1,5 +1,11 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["bench/*.bench.ts"],
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/index.ts", "scripts/*.ts", "bench/*.ts", "tests/*.ts"],
+  "project": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "bench/**/*.ts",
+    "tests/**/*.ts"
+  ],
   "ignoreBinaries": ["tsc"]
 }
