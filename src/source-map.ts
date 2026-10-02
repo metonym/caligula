@@ -1,31 +1,13 @@
-const BASE64 = new Uint8Array(64);
-for (let i = 0; i < 64; i++) {
-  BASE64[i] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".charCodeAt(
-      i,
-    );
-}
-const COMMA = 44;
+import { CLOSE_CURLY, COMMA, CR, FF, LF, OPEN_CURLY, SEMICOLON } from "./chars";
 
-const NEWLINE = 10;
-const CR = 13;
-const FEED = 12;
-const OPEN_CURLY = 123;
-const CLOSE_CURLY = 125;
-const SEMICOLON = 59;
-
-export type SourceMap = {
-  version: 3;
-  sources: string[];
-  sourcesContent?: string[];
-  names: string[];
-  mappings: string;
-};
+const BASE64 = new TextEncoder().encode(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+);
 
 function isNewline(css: string, i: number): boolean {
   const code = css.charCodeAt(i);
-  if (code === NEWLINE || code === FEED) return true;
-  return code === CR && css.charCodeAt(i + 1) !== NEWLINE;
+  if (code === LF || code === FF) return true;
+  return code === CR && css.charCodeAt(i + 1) !== LF;
 }
 
 export class SourceMapBuilder {
@@ -135,14 +117,7 @@ export class SourceMapBuilder {
     }
   }
 
-  toJSON(source: string, sourceContent: string | undefined): SourceMap {
-    const map: SourceMap = {
-      version: 3,
-      sources: [source],
-      names: [],
-      mappings: new TextDecoder().decode(this.bytes.subarray(0, this.length)),
-    };
-    if (sourceContent !== undefined) map.sourcesContent = [sourceContent];
-    return map;
+  mappings(): string {
+    return new TextDecoder().decode(this.bytes.subarray(0, this.length));
   }
 }

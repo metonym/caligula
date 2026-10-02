@@ -1,4 +1,14 @@
 import {
+  BANG,
+  BOM,
+  BOM_REVERSED,
+  COMMA,
+  DASH,
+  SEMICOLON,
+  STAR,
+  UNDERSCORE,
+} from "./chars";
+import {
   isTrivia,
   Scanner,
   T_AT,
@@ -31,12 +41,6 @@ import {
   N_RULE,
 } from "./tree";
 
-const COMMA = 0x2c;
-const SEMICOLON = 0x3b;
-const DASH = 0x2d;
-const STAR = 0x2a;
-const UNDERSCORE = 0x5f;
-
 // The visitor walk and the emitter recurse once per level.
 const MAX_DEPTH = 1000;
 
@@ -61,7 +65,7 @@ export class Parser {
     this.decls = new Decls(Math.max(64, css.length >> 5));
     this.readDeclsIn = readDeclsIn;
     const bom = css.charCodeAt(0);
-    const start = bom === 0xfeff || bom === 0xfffe ? 1 : 0;
+    const start = bom === BOM || bom === BOM_REVERSED ? 1 : 0;
     this.scanner = new Scanner(css, start);
     this.container = new CssNode(N_ROOT, null, start);
     this.trivia = start;
@@ -92,10 +96,7 @@ export class Parser {
           break;
         case T_EOF:
           if (this.container !== root) bail();
-          if ((root.nodes as Child[]).length > 0) {
-            root.semicolon = this.semicolon;
-          }
-          root.end = this.css.length;
+          this.seal(root, this.css.length);
           return root;
         default:
           this.declarationOrRule();
@@ -119,12 +120,16 @@ export class Parser {
     const node = this.container;
     const parent = node.parent;
     if (parent === null) bail();
-    if ((node.nodes as Child[]).length > 0) node.semicolon = this.semicolon;
+    this.seal(node, end);
     this.semicolon = false;
-    node.end = end;
     this.depth--;
     this.container = parent;
     this.trivia = end;
+  }
+
+  private seal(node: CssNode, end: number): void {
+    if ((node.nodes as Child[]).length > 0) node.semicolon = this.semicolon;
+    node.end = end;
   }
 
   private comment(): void {
@@ -211,9 +216,9 @@ export class Parser {
     const first = this.skipTrivia(0, this.count);
     const last = this.trimTrivia(first, this.count);
     if (first < last) {
-      node.a = this.starts[first];
-      node.b = this.ends[last - 1];
-      node.clean = this.cleanText(first, last);
+      node.textStart = this.starts[first];
+      node.textEnd = this.ends[last - 1];
+      node.text = this.cleanText(first, last);
     }
 
     this.semicolon = false;
@@ -231,7 +236,7 @@ export class Parser {
       node.end = scanner.from;
       scanner.pos = scanner.from;
     } else {
-      node.end = first < last ? node.b : scanner.from;
+      node.end = first < last ? node.textEnd : scanner.from;
       this.trivia = node.end;
     }
   }
@@ -285,11 +290,11 @@ export class Parser {
     const node = new CssNode(N_RULE, this.container, this.trivia);
     const last = this.trimTrivia(0, this.count);
     if (last === 0) {
-      node.start = node.a = node.b = this.scanner.from;
+      node.start = node.textStart = node.textEnd = this.scanner.from;
     } else {
-      node.start = node.a = this.starts[0];
-      node.b = this.ends[last - 1];
-      node.clean = this.cleanText(0, last);
+      node.start = node.textStart = this.starts[0];
+      node.textEnd = this.ends[last - 1];
+      node.text = this.cleanText(0, last);
     }
     this.open(node);
   }
@@ -330,11 +335,11 @@ export class Parser {
       semi || custom ? this.count : this.trimTrivia(colon + 1, this.count);
     const end = ends[last - 1];
 
-    let a = ends[colon];
-    let b = end;
-    let clean: string | null = null;
+    let valueStart = ends[colon];
+    let valueEnd = end;
+    let text: string | null = null;
     if (this.container.readDecls) {
-      [a, b, clean] = this.value(colon + 1, last, custom);
+      [valueStart, valueEnd, text] = this.value(colon + 1, last, custom);
     }
 
     let flags = (semi ? D_SEMI : 0) | (custom ? D_CUSTOM : 0);
@@ -344,8 +349,15 @@ export class Parser {
     ) {
       flags |= D_AFTER_SEMI;
     }
-    const index = this.decls.push(start, ends[0], a, b, end, flags);
-    if (clean !== null) this.decls.clean.set(index, clean);
+    const index = this.decls.push(
+      start,
+      ends[0],
+      valueStart,
+      valueEnd,
+      end,
+      flags,
+    );
+    if (text !== null) this.decls.text.set(index, text);
     this.add(index);
     this.semicolon = semi;
     this.trivia = semi ? this.scanner.to : end;
@@ -355,7 +367,7 @@ export class Parser {
     from: number,
     to: number,
     custom: boolean,
-  ): [a: number, b: number, clean: string | null] {
+  ): [start: number, end: number, text: string | null] {
     const kinds = this.kinds;
     const starts = this.starts;
     const ends = this.ends;
@@ -427,5 +439,5 @@ export class Parser {
 }
 
 function startsWithBang(text: string): boolean {
-  return text.trim().charCodeAt(0) === 0x21;
+  return text.trim().charCodeAt(0) === BANG;
 }

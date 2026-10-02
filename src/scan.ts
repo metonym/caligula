@@ -1,3 +1,29 @@
+import {
+  AT,
+  BACKSLASH,
+  CLOSE_CURLY,
+  CLOSE_PAREN,
+  CLOSE_SQUARE,
+  COLON,
+  CR,
+  DQUOTE,
+  FF,
+  LF,
+  LINE_SEPARATOR,
+  LOWER_L,
+  LOWER_R,
+  LOWER_U,
+  OPEN_CURLY,
+  OPEN_PAREN,
+  OPEN_SQUARE,
+  PARAGRAPH_SEPARATOR,
+  SEMICOLON,
+  SLASH,
+  SPACE,
+  SQUOTE,
+  STAR,
+  TAB,
+} from "./chars";
 import { bail } from "./tree";
 
 export const T_EOF = 0;
@@ -19,24 +45,6 @@ export const T_SEMICOLON = 14;
 export function isTrivia(kind: number): boolean {
   return kind === T_SPACE || kind === T_COMMENT;
 }
-
-const LF = 0x0a;
-const CR = 0x0d;
-const SPACE = 0x20;
-const DQUOTE = 0x22;
-const SQUOTE = 0x27;
-const OPEN_PAREN = 0x28;
-const CLOSE_PAREN = 0x29;
-const STAR = 0x2a;
-const SLASH = 0x2f;
-const COLON = 0x3a;
-const SEMICOLON = 0x3b;
-const AT = 0x40;
-const OPEN_SQUARE = 0x5b;
-const BACKSLASH = 0x5c;
-const CLOSE_SQUARE = 0x5d;
-const OPEN_CURLY = 0x7b;
-const CLOSE_CURLY = 0x7d;
 
 const C_SPACE = 1;
 const C_WORD_END = 2;
@@ -81,8 +89,8 @@ export class Scanner {
   kind = T_EOF;
   from: number;
   to: number;
-  // PostCSS decides whether `(` opens an unquoted `url(...)` by popping a
-  // stack of every word seen so far; only the depths holding `url` matter.
+  // `(` opens an unquoted `url(...)` if the word stack pops a `url` word.
+  // Only the depths holding `url` are tracked.
   private words = 0;
   private urlDepths: number[] = [];
   private unsafeEnd = -1;
@@ -112,9 +120,9 @@ export class Scanner {
     switch (code) {
       case SPACE:
       case LF:
-      case 0x09:
+      case TAB:
       case CR:
-      case 0x0c:
+      case FF:
         while (to < length && has(css.charCodeAt(to), C_SPACE)) to++;
         kind = T_SPACE;
         break;
@@ -229,8 +237,8 @@ export class Scanner {
         if (
           before !== LF &&
           before !== CR &&
-          before !== 0x2028 &&
-          before !== 0x2029
+          before !== LINE_SEPARATOR &&
+          before !== PARAGRAPH_SEPARATOR
         ) {
           this.unsafeEnd = close;
           return from + 1;
@@ -246,9 +254,9 @@ export class Scanner {
     // Not `startsWith`: that stops this from being inlined into `next`.
     if (
       to - from === 3 &&
-      css.charCodeAt(from) === 0x75 &&
-      css.charCodeAt(from + 1) === 0x72 &&
-      css.charCodeAt(from + 2) === 0x6c
+      css.charCodeAt(from) === LOWER_U &&
+      css.charCodeAt(from + 1) === LOWER_R &&
+      css.charCodeAt(from + 2) === LOWER_L
     ) {
       this.urlDepths.push(depth);
     }
