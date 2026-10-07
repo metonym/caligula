@@ -89,8 +89,7 @@ export class Scanner {
   kind = T_EOF;
   from: number;
   to: number;
-  // `(` opens an unquoted `url(...)` if the word stack pops a `url` word.
-  // Only the depths holding `url` are tracked.
+  // `(` opens an unquoted `url(...)` if the word it pops is `url`.
   private words = 0;
   private urlDepths: number[] = [];
   private unsafeEnd = -1;

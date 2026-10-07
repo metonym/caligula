@@ -1,5 +1,5 @@
-import { filterCss } from "caligula";
-import { CORPORA } from "../bench/corpora";
+import { type FilterOptions, filterCss } from "caligula";
+import { CORPORA, keepOnly } from "../bench/corpora";
 import {
   checkSourceMap,
   expectParity,
@@ -13,9 +13,9 @@ import {
 describe("real stylesheets", () => {
   for (const { name, css, keep } of CORPORA) {
     test(name, () => {
-      const options = {
+      const options: FilterOptions = {
         readDecls: ["font-face"],
-        rule({ selector }: { selector: string }) {
+        rule({ selector }) {
           if (!keep.test(selector)) return false;
           if (selector.includes(",")) {
             return selector
@@ -24,10 +24,7 @@ describe("real stylesheets", () => {
               .join(",");
           }
         },
-        atRule(atRule: {
-          name: string;
-          walkDecls(cb: (prop: string, value: string) => void): void;
-        }) {
+        atRule(atRule) {
           if (atRule.name === "keyframes") return false;
           if (atRule.name !== "font-face") return;
           let weight = "";
@@ -45,7 +42,7 @@ describe("real stylesheets", () => {
       expect(filterCss(css).css).toBe(css);
 
       const { map, ...mapped } = filterCss(css, {
-        rule: ({ selector }) => keep.test(selector) || false,
+        rule: keepOnly(keep),
         map: { source: name },
       });
       if (!map) throw new Error("expected a map");

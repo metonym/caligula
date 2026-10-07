@@ -4,6 +4,13 @@ export const N_AT_BLOCK = 2;
 export const N_AT_STATEMENT = 3;
 export const N_COMMENT = 4;
 
+type NodeType =
+  | typeof N_ROOT
+  | typeof N_RULE
+  | typeof N_AT_BLOCK
+  | typeof N_AT_STATEMENT
+  | typeof N_COMMENT;
+
 export const BAIL = Symbol("bail");
 
 export function bail(): never {
@@ -20,7 +27,7 @@ const F_DIRTY = 16;
 const F_REWRITTEN = 32;
 
 export class CssNode {
-  type: number;
+  type: NodeType;
   flags: number;
   parent: CssNode | null;
   nodes: Child[] | null;
@@ -35,7 +42,7 @@ export class CssNode {
   /** Comment-stripped selector or params, or the rewritten selector. */
   text: string | null;
 
-  constructor(type: number, parent: CssNode | null, before: number) {
+  constructor(type: NodeType, parent: CssNode | null, before: number) {
     this.type = type;
     this.flags = parent !== null ? parent.flags & F_READ_DECLS : 0;
     this.parent = parent;
@@ -98,7 +105,6 @@ export class CssNode {
     this.set(F_REWRITTEN, on);
   }
 
-  /** The selector or params as a visitor reads them. */
   read(css: string): string {
     return this.text ?? css.slice(this.textStart, this.textEnd);
   }

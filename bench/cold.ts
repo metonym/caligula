@@ -2,7 +2,7 @@
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import type { filterCss as FilterCss } from "caligula";
-import { BOOTSTRAP, CARBON, type Corpus, UTILITIES } from "./corpora";
+import { BOOTSTRAP, CARBON, type Corpus, keepOnly, UTILITIES } from "./corpora";
 
 const CORPORA: Record<string, Corpus> = {
   carbon: CARBON,
@@ -18,9 +18,7 @@ if (name !== undefined) {
     `${src}/index.ts`
   );
   const { css, keep } = CORPORA[name];
-  const options = {
-    rule: ({ selector }: { selector: string }) => keep.test(selector) || false,
-  };
+  const options = { rule: keepOnly(keep) };
   const t0 = Bun.nanoseconds();
   filterCss(css, options);
   const t1 = Bun.nanoseconds();

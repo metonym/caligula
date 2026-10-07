@@ -1,5 +1,5 @@
 import type { FilterOptions, filterCss } from "caligula";
-import { BOOTSTRAP_MIN, CARBON, CORPORA, UTILITIES } from "./corpora";
+import { BOOTSTRAP_MIN, CARBON, CORPORA, keepOnly, UTILITIES } from "./corpora";
 
 export type Workload = {
   group: string;
@@ -11,9 +11,10 @@ export type Workload = {
   warmup?: string;
 };
 
-type Filter = typeof filterCss;
-
-export function checkWorkload(filter: Filter, workload: Workload): void {
+export function checkWorkload(
+  filter: typeof filterCss,
+  workload: Workload,
+): void {
   const result = filter(workload.css, workload.options);
   const label = `${workload.group}: ${workload.name}`;
   const skipped = workload.expect.skipped ?? false;
@@ -37,8 +38,7 @@ for (const { name, css, keep } of CORPORA) {
   const add = (label: string, options: FilterOptions, edits?: boolean) => {
     WORKLOADS.push({ group, name: label, css, options, expect: { edits } });
   };
-  const removeMost: FilterOptions["rule"] = ({ selector }) =>
-    keep.test(selector) || false;
+  const removeMost = keepOnly(keep);
 
   add("no visitors (round trip)", {}, false);
   add("visitor keeps everything", { rule: () => undefined }, false);
@@ -52,7 +52,7 @@ for (const { name, css, keep } of CORPORA) {
     "rewrite selector lists",
     {
       rule({ selector }) {
-        if (!selector.includes(",")) return keep.test(selector) || false;
+        if (!selector.includes(",")) return removeMost({ selector });
         const kept = selector.split(",").filter((part) => keep.test(part));
         return kept.length === 0 ? false : kept.join(",");
       },
@@ -83,12 +83,11 @@ for (const { name, css, keep } of CORPORA) {
 
 for (const copies of [1, 4, 16]) {
   const css = BOOTSTRAP_MIN.css.repeat(copies);
-  const keep = BOOTSTRAP_MIN.keep;
   WORKLOADS.push({
     group: "scaling: bootstrap.min.css repeated",
     name: kb(css),
     css,
-    options: { rule: ({ selector }) => keep.test(selector) || false },
+    options: { rule: keepOnly(BOOTSTRAP_MIN.keep) },
     expect: { edits: true },
   });
 }
@@ -113,12 +112,11 @@ const ADVERSARIAL: [string, string][] = [
   ["nesting 500 deep", fill(`${".a{".repeat(500)}b:c${"}".repeat(500)}`)],
   ["long at-rule params", `@media ${fill("(a:b) and ")}x{a{b:c}}`],
   ["custom properties with blocks", `a{${fill("--x:{b:c;d:e};--y: ;")}}`],
+  [
+    "removals 900 deep",
+    `${".b{".repeat(900)}${fill(".a{b:c}")}${"}".repeat(900)}`,
+  ],
 ];
-
-ADVERSARIAL.push([
-  "removals 900 deep",
-  `${".b{".repeat(900)}${fill(".a{b:c}")}${"}".repeat(900)}`,
-]);
 
 for (const [name, css] of ADVERSARIAL) {
   WORKLOADS.push({
@@ -130,7 +128,7 @@ for (const [name, css] of ADVERSARIAL) {
   });
 }
 
-// Peak memory of one call (`bun run bench:mem`); `repeat` returns a rope, so flatten it.
+// `repeat` returns a rope; flatten it so `--peak-mem` doesn't count that.
 for (const [label, corpus, copies] of [
   ["carbon", CARBON, 4],
   ["bootstrap.min", BOOTSTRAP_MIN, 16],
@@ -140,8 +138,7 @@ for (const [label, corpus, copies] of [
   css.charCodeAt(css.length - 1);
   const group = `memory: ${label} x${copies}, ${kb(css)}`;
   const warmup = corpus.css.slice(0, 20_000);
-  const removeMost: FilterOptions["rule"] = ({ selector }) =>
-    corpus.keep.test(selector) || false;
+  const removeMost = keepOnly(corpus.keep);
   const add = (name: string, options: FilterOptions, edits: boolean) => {
     WORKLOADS.push({ group, name, css, options, expect: { edits }, warmup });
   };

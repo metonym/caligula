@@ -3,13 +3,14 @@ import { transform } from "lightningcss";
 import { group, task } from "ostia";
 import postcss, { type Rule } from "postcss";
 import discardEmpty from "postcss-discard-empty";
-import { CORPORA } from "./corpora";
+import { CORPORA, keepOnly } from "./corpora";
 
 type LightningSelector = { type: string; name?: string }[];
 
 for (const { name, css, keep, keepClass } of CORPORA) {
   const kb = Math.round(Buffer.byteLength(css) / 1000);
   const code = Buffer.from(css);
+  const rule = keepOnly(keep);
 
   const postcssFilter = postcss([
     {
@@ -36,7 +37,7 @@ for (const { name, css, keep, keepClass } of CORPORA) {
 
   group(`${name}, ${kb} kB: filter`, () => {
     task("caligula", () => {
-      filterCss(css, { rule: ({ selector }) => keep.test(selector) || false });
+      filterCss(css, { rule });
     });
     task("postcss + discard-empty", () => {
       postcssFilter.process(css, { from: undefined }).css;
@@ -54,10 +55,7 @@ for (const { name, css, keep, keepClass } of CORPORA) {
 
   group(`${name}, ${kb} kB: filter + source map`, () => {
     task("caligula", () => {
-      filterCss(css, {
-        rule: ({ selector }) => keep.test(selector) || false,
-        map: true,
-      });
+      filterCss(css, { rule, map: true });
     });
     task("postcss + discard-empty", () => {
       const result = postcssFilter.process(css, {
