@@ -200,7 +200,7 @@ export function filterCss(
   };
   if (builder) {
     const { source = "input.css", includeContent = true } =
-      map === true ? {} : map || {};
+      typeof map === "object" ? map : {};
     result.map = {
       version: 3,
       sources: [source],

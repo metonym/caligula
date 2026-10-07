@@ -4,6 +4,12 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const read = (path: string) => readFileSync(path, "utf8");
 
+/** A `rule` visitor that removes every rule whose selector doesn't match. */
+export const keepOnly =
+  (keep: RegExp) =>
+  ({ selector }: { selector: string }) =>
+    keep.test(selector) || false;
+
 export type Corpus = {
   name: string;
   css: string;

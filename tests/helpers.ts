@@ -50,15 +50,16 @@ function pruneList(selector: string): string | false | undefined {
   if (kept.length < parts.length) return kept.join(",");
 }
 
-const pruneRules = (calls: string[]): FilterOptions["rule"] => {
-  return ({ selector }) => {
+const pruneRules =
+  (calls: string[]): FilterOptions["rule"] =>
+  ({ selector }) => {
     calls.push(selector);
     return pruneList(selector);
   };
-};
 
-const filterAtRules = (calls: string[]): FilterOptions["atRule"] => {
-  return (atRule) => {
+const filterAtRules =
+  (calls: string[]): FilterOptions["atRule"] =>
+  (atRule) => {
     calls.push(`@${atRule.name}|${atRule.params}`);
     const name = atRule.name.toLowerCase();
     if (name === "keyframes" && atRule.params.trim() === "fade") return false;
@@ -72,7 +73,6 @@ const filterAtRules = (calls: string[]): FilterOptions["atRule"] => {
       if (weight.trim() === "700") return false;
     }
   };
-};
 
 export const SCENARIOS: Record<string, Scenario> = {
   none: () => ({}),

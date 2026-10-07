@@ -21,8 +21,7 @@ if (!result.success) {
   process.exit(1);
 }
 
-// `src/index.ts` declares every public type, so its own declaration file
-// is already self-contained.
+// `src/index.ts` declares every public type, so its declarations stand alone.
 const program = ts.createProgram([entry], {
   target: ts.ScriptTarget.ESNext,
   module: ts.ModuleKind.ESNext,

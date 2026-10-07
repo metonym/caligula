@@ -174,23 +174,28 @@ export class Parser {
     return to;
   }
 
+  /** Tracks `(`, `[` and, if `curly`, `{` nesting; returns the new depth. */
+  private nest(kind: number, depth: number, curly: boolean): number {
+    const closers = this.closers;
+    if (depth > 0 && kind === closers[depth - 1]) return depth - 1;
+    if (kind === T_OPEN_PAREN) closers[depth] = T_CLOSE_PAREN;
+    else if (kind === T_OPEN_SQUARE) closers[depth] = T_CLOSE_SQUARE;
+    else if (kind === T_OPEN_CURLY && curly) closers[depth] = T_CLOSE_CURLY;
+    else return depth;
+    return depth + 1;
+  }
+
   private atRule(): void {
     const scanner = this.scanner;
     const at = scanner.from;
     const nameEnd = scanner.to;
     if (nameEnd === at + 1) bail();
-    const closers = this.closers;
     let depth = 0;
     this.count = 0;
     let kind: number;
     for (;;) {
       kind = scanner.next();
-      if (depth > 0 && kind === closers[depth - 1]) depth--;
-      else if (kind === T_OPEN_PAREN) closers[depth++] = T_CLOSE_PAREN;
-      else if (kind === T_OPEN_SQUARE) closers[depth++] = T_CLOSE_SQUARE;
-      else if (kind === T_OPEN_CURLY && depth > 0) {
-        closers[depth++] = T_CLOSE_CURLY;
-      }
+      depth = this.nest(kind, depth, depth > 0);
       if (
         depth === 0 &&
         (kind === T_SEMICOLON ||
@@ -244,7 +249,6 @@ export class Parser {
   private declarationOrRule(): void {
     const scanner = this.scanner;
     const css = this.css;
-    const closers = this.closers;
     const from = scanner.from;
     const custom =
       scanner.kind === T_WORD &&
@@ -255,12 +259,9 @@ export class Parser {
     let kind = scanner.kind;
     this.count = 0;
     for (;;) {
-      if (depth > 0 && kind === closers[depth - 1]) depth--;
-      else if (kind === T_OPEN_PAREN) closers[depth++] = T_CLOSE_PAREN;
-      else if (kind === T_OPEN_SQUARE) closers[depth++] = T_CLOSE_SQUARE;
-      else if (kind === T_OPEN_CURLY && custom && colon !== -1) {
-        closers[depth++] = T_CLOSE_CURLY;
-      } else if (depth === 0) {
+      const nested = this.nest(kind, depth, custom && colon !== -1);
+      if (nested !== depth) depth = nested;
+      else if (depth === 0) {
         if (kind === T_COLON) {
           if (colon === -1) colon = this.count;
         } else if (kind === T_SEMICOLON) {

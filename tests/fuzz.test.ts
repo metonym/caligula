@@ -110,7 +110,6 @@ test(`fuzz (seed ${SEED}, ${RUNS} sheets)`, () => {
     " (a{b)",
   ];
 
-  // Set when a sheet hits a deliberate difference from PostCSS.
   let divergesFromPostcss = false;
   const EMPTY_VALUES = new Set(["", " ", "!important"]);
 
