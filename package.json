@@ -17,7 +17,7 @@
     "bench:ab": "ostia ab bench/caligula.bench.ts",
     "bench:mem": "ostia bench bench/caligula.bench.ts --peak-mem --filter ^memory",
     "bench:cold": "bun bench/cold.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "biome ci --error-on-warnings",
     "knip": "knip-bun",
     "lint:fix": "biome check --write --unsafe ."
