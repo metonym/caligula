@@ -7,5 +7,5 @@
     "bench/**/*.ts",
     "tests/**/*.ts"
   ],
-  "ignoreBinaries": ["tsc"]
+  "ignoreBinaries": ["check"]
 }
