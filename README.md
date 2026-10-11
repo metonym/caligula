@@ -27,7 +27,7 @@ const { css, map, removed, skipped } = filterCss(source, {
 
 | Option | Description |
 |:---|:---|
-| `rule({ selector })` | Return `false` to remove the rule, a string to replace its selector, or anything else to keep it. |
+| `rule({ selector, parsed })` | Return `false` to remove the rule, a string to replace its selector, or anything else to keep it. `parsed` is the selector list parsed by `parseSelectorList` (below), computed the first time it's read. |
 | `atRule({ name, params, walkDecls })` | Return `false` to remove the at-rule. |
 | `readDecls` | At-rule names (case-insensitive) whose declarations `atRule` reads through `walkDecls(cb(prop, value))`, e.g. `["font-face"]`. |
 | `discardEmpty` | Drop containers left with no children, like `postcss-discard-empty`. Default `true`. |
@@ -37,6 +37,37 @@ const { css, map, removed, skipped } = filterCss(source, {
 
 To list selectors without changing anything, return nothing from `rule` and check `skipped`.
 
+### `caligula/selector`
+
+Selector utilities for deciding what to keep, without a CSS parser of your own.
+
+```ts
+import {
+  parseSelector,
+  parseSelectorList,
+  requiredClasses,
+  splitSelectorList,
+} from "caligula/selector";
+
+splitSelectorList(".a, .b:is(.c, .d)"); // [".a", ".b:is(.c, .d)"]
+
+const parsed = parseSelector(".x .y > .z:not(.w)");
+parsed.compounds; // [{ classes: ["x"], negated: [] }, { classes: ["y"], negated: [] }, { classes: ["z"], negated: ["w"] }]
+parsed.combinators; // [" ", ">"]
+parsed.subject; // the last compound, { classes: ["z"], negated: ["w"] }
+
+requiredClasses(".bx--a .x > .bx--b", { prefix: "bx--" }); // ["bx--a", "bx--b"]
+```
+
+| Function | Returns |
+|:---|:---|
+| `splitSelectorList(list)` | The selectors in a list, trimmed: split on commas outside parentheses, attribute selectors, strings and comments. |
+| `parseSelector(selector)` | `{ text, compounds, combinators, subject }` for one selector. Throws on a list. |
+| `parseSelectorList(list)` | `parseSelector` for each selector in a list, in one pass. |
+| `requiredClasses(selector, { prefix? })` | Every class the selector requires, across its compounds, deduplicated; `prefix` keeps only those that start with it. |
+
+A compound's `classes` are what an element must have to match: its own `.a`, plus the classes every branch of an `:is()`/`:where()` (and `:matches()`, `:-webkit-any()`, `:-moz-any()`) requires. Classes in `:has()` are on other elements and aren't listed; those in `:not()` are listed in `negated`. Names are unescaped (`.sm\:p-4` is `sm:p-4`). A leading combinator (`> .a` in nested CSS) gets an empty compound before it. Malformed selectors parse as far as they make sense; nothing but `parseSelector` on a list throws.
+
 ## Features
 
 - **PostCSS parity.** For every input it doesn't skip, the output equals `postcss([visitors, discardEmpty()]).process(css).css`, and visitors see the same strings in the same order. It's tested on Bootstrap, Carbon, Tailwind v4-style output and modern syntax (nesting, `@layer`, `@container`, `@scope`, `@property`), and by a differential fuzzer that also compares visitor calls and declaration values.
@@ -44,7 +75,7 @@ To list selectors without changing anything, return nothing from `rule` and chec
 - **Source maps.** Optional v3 maps for the output.
 - **No-op is the identity.** With no visitor changes, the output is the input, byte for byte.
 - **Fail-safe.** A syntax error, nesting deeper than 1,000 blocks, or anything else it can't reproduce exactly returns the input unchanged with `skipped: true`, before any visitor runs.
-- **Small and portable.** No dependencies, no Node APIs, ~6 kB gzipped.
+- **Small and portable.** No dependencies, no Node APIs, ~7 kB gzipped.
 - **Deliberate differences from PostCSS:**
   - `<` is never escaped.
   - A reversed BOM (U+FFFE) is left as-is; PostCSS rewrites it to U+FEFF.

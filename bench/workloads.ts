@@ -33,7 +33,7 @@ const kb = (css: string) => `${Math.round(css.length / 1000)} kB`;
 
 export const WORKLOADS: Workload[] = [];
 
-for (const { name, css, keep } of CORPORA) {
+for (const { name, css, keep, keepClass } of CORPORA) {
   const group = `${name}, ${kb(css)}`;
   const add = (label: string, options: FilterOptions, edits?: boolean) => {
     WORKLOADS.push({ group, name: label, css, options, expect: { edits } });
@@ -55,6 +55,19 @@ for (const { name, css, keep } of CORPORA) {
         if (!selector.includes(",")) return removeMost({ selector });
         const kept = selector.split(",").filter((part) => keep.test(part));
         return kept.length === 0 ? false : kept.join(",");
+      },
+    },
+    true,
+  );
+  add(
+    "prune selectors by parsed classes",
+    {
+      rule({ parsed }) {
+        const kept = parsed.filter(({ subject }) =>
+          subject.classes.some((cls) => keepClass.test(cls)),
+        );
+        if (kept.length === parsed.length) return;
+        return kept.length === 0 ? false : kept.map((s) => s.text).join(", ");
       },
     },
     true,

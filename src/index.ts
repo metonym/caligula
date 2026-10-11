@@ -1,5 +1,6 @@
 import { Emitter } from "./emit";
 import { Parser } from "./parse";
+import { parseSelectorList } from "./selector";
 import { SourceMapBuilder } from "./source-map";
 import {
   BAIL,
@@ -12,9 +13,38 @@ import {
   N_RULE,
 } from "./tree";
 
+/** Joins two compounds: descendant, child, next sibling, subsequent sibling. */
+export type Combinator = " " | ">" | "+" | "~";
+
+export type Compound = {
+  /**
+   * Classes the element must have: its own `.a`, plus those every branch of
+   * an `:is()` or `:where()` requires. Not those in `:has()`, which are on
+   * other elements, nor in `:not()`.
+   */
+  readonly classes: readonly string[];
+  /** Classes required by the selectors in its `:not()`. */
+  readonly negated: readonly string[];
+};
+
+export type ParsedSelector = {
+  /** The selector, trimmed. */
+  readonly text: string;
+  /** A leading combinator (nested `> .a`) gets an empty compound before it. */
+  readonly compounds: readonly Compound[];
+  /** `combinators[i]` joins `compounds[i]` and `compounds[i + 1]`. */
+  readonly combinators: readonly Combinator[];
+  /** The last compound: the element the selector matches. */
+  readonly subject: Compound;
+};
+
 export type FilterOptions = {
   /** Return `false` to remove the rule, or a string to replace its selector. */
-  rule?: (rule: { selector: string }) => boolean | string | undefined;
+  rule?: (rule: {
+    selector: string;
+    /** Each selector in `selector`, parsed. Computed when first read. */
+    readonly parsed: readonly ParsedSelector[];
+  }) => boolean | string | undefined;
   /** Return `false` to remove the at-rule. */
   atRule?: (atRule: {
     name: string;
@@ -44,6 +74,21 @@ export type FilterResult = {
   removed: number;
   map?: SourceMap;
 };
+
+// A class, so the `parsed` getter lives on the prototype.
+class RuleView {
+  selector: string;
+  private list: ParsedSelector[] | null = null;
+
+  constructor(selector: string) {
+    this.selector = selector;
+  }
+
+  get parsed(): ParsedSelector[] {
+    this.list ??= parseSelectorList(this.selector);
+    return this.list;
+  }
+}
 
 class Filter {
   removed = 0;
@@ -87,7 +132,7 @@ class Filter {
     const visitor = this.options.rule;
     if (!visitor) return;
     const selector = node.read(this.css);
-    const result = visitor({ selector });
+    const result = visitor(new RuleView(selector));
     if (result === false) {
       this.remove(node);
     } else if (typeof result === "string" && result !== selector) {

@@ -37,6 +37,7 @@ try {
     join(dir, "smoke.js"),
     `import assert from "node:assert/strict";
 import { filterCss } from "caligula";
+import { parseSelector, splitSelectorList } from "caligula/selector";
 
 const css = ".a{color:red}\\n.b{color:blue}\\n.c, .d{margin:0}";
 const result = filterCss(css, {
@@ -49,6 +50,8 @@ assert.equal(result.removed, 1);
 assert.equal(result.skipped, false);
 assert.deepEqual(result.map.sources, ["app.css"]);
 assert.equal(filterCss(".a{").skipped, true);
+assert.deepEqual(splitSelectorList(".a, .b"), [".a", ".b"]);
+assert.deepEqual(parseSelector(".a > .b").subject.classes, ["b"]);
 `,
   );
   await $`node smoke.js`.cwd(dir);
@@ -56,10 +59,15 @@ assert.equal(filterCss(".a{").skipped, true);
   await writeFile(
     join(dir, "consumer.ts"),
     `import { type FilterOptions, type FilterResult, filterCss } from "caligula";
+import { type ParsedSelector, requiredClasses } from "caligula/selector";
 
 const options: FilterOptions = {
   readDecls: ["font-face"],
-  rule: ({ selector }) => selector.startsWith(".keep") || false,
+  rule: (rule) =>
+    rule.parsed.every(
+      (selector: ParsedSelector) =>
+        requiredClasses(selector, { prefix: "keep" }).length > 0,
+    ) || false,
   atRule: (atRule) => {
     let weight = "";
     atRule.walkDecls((prop, value) => {

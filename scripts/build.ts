@@ -5,12 +5,13 @@ import { build } from "bun";
 
 const root = resolve(import.meta.dir, "..");
 const outDir = resolve(root, "dist");
-const entry = resolve(root, "src/index.ts");
+const entries = ["index", "selector"];
+const entrypoints = entries.map((name) => resolve(root, `src/${name}.ts`));
 
 await rm(outDir, { recursive: true, force: true });
 
 const result = await build({
-  entrypoints: [entry],
+  entrypoints,
   outdir: outDir,
   format: "esm",
   target: "browser",
@@ -21,8 +22,9 @@ if (!result.success) {
   process.exit(1);
 }
 
-// `src/index.ts` declares every public type, so its declarations stand alone.
-const program = ts.createProgram([entry], {
+// `src/index.ts` declares every public type, so its declarations stand alone;
+// `src/selector.ts` takes its types from there.
+const program = ts.createProgram(entrypoints, {
   target: ts.ScriptTarget.ESNext,
   module: ts.ModuleKind.ESNext,
   moduleResolution: ts.ModuleResolutionKind.Bundler,
@@ -32,22 +34,33 @@ const program = ts.createProgram([entry], {
   emitDeclarationOnly: true,
   types: [],
 });
-let dts = "";
-const emitted = program.emit(program.getSourceFile(entry), (_, text) => {
-  dts = text;
+const dts = new Map<string, string>();
+const emitted = program.emit(undefined, (file, text) => {
+  dts.set(file.slice(file.lastIndexOf("/") + 1), text);
 });
+const imports = (file: string) =>
+  [...(dts.get(file) ?? "").matchAll(/from "(\.[^"]*)"/g)].map((m) => m[1]);
 const errors = [...ts.getPreEmitDiagnostics(program), ...emitted.diagnostics];
-if (errors.length > 0 || emitted.emitSkipped || /from "\./.test(dts)) {
+if (
+  errors.length > 0 ||
+  emitted.emitSkipped ||
+  imports("index.d.ts").length > 0 ||
+  imports("selector.d.ts").some((path) => path !== "./index.js")
+) {
   console.error(
     ts.formatDiagnostics(errors, {
       getCanonicalFileName: (name) => name,
       getCurrentDirectory: () => root,
       getNewLine: () => "\n",
-    }) || "index.d.ts must not import other source files",
+    }) || "index.d.ts must stand alone, and selector.d.ts import only it",
   );
   process.exit(1);
 }
-await writeFile(resolve(outDir, "index.d.ts"), dts);
+await Promise.all(
+  entries.map((name) =>
+    writeFile(resolve(outDir, `${name}.d.ts`), dts.get(`${name}.d.ts`) ?? ""),
+  ),
+);
 
 await Promise.all(
   ["README.md", "LICENSE"].map((file) =>
@@ -61,17 +74,20 @@ const pkg = Object.fromEntries(
     ([key]) => key !== "devDependencies" && key !== "scripts",
   ),
 );
-const main = "./index.js";
-const types = "./index.d.ts";
+const exports = Object.fromEntries(
+  entries.map((name) => {
+    const js = `./${name}.js`;
+    const types = `./${name}.d.ts`;
+    return [
+      name === "index" ? "." : `./${name}`,
+      { types, import: js, default: js },
+    ];
+  }),
+);
 await writeFile(
   resolve(outDir, "package.json"),
   `${JSON.stringify(
-    {
-      ...pkg,
-      main,
-      types,
-      exports: { ".": { types, import: main, default: main } },
-    },
+    { ...pkg, main: "./index.js", types: "./index.d.ts", exports },
     null,
     2,
   )}\n`,
