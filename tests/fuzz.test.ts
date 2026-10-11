@@ -108,6 +108,10 @@ test(`fuzz (seed ${SEED}, ${RUNS} sheets)`, () => {
     " x /*c*/",
     " a /*c*/ b",
     " (a{b)",
+    " a",
+    " a.b",
+    " a, b",
+    " A",
   ];
 
   let divergesFromPostcss = false;
@@ -148,7 +152,6 @@ test(`fuzz (seed ${SEED}, ${RUNS} sheets)`, () => {
   const atrule = (depth: number): string => {
     const params = pick(AT_PARAMS);
     const name = pick(AT_NAMES);
-    if (name === "layer") divergesFromPostcss = true;
     const head = `${comment()}${pick(WS)}@${name}${params}${pick(WS)}`;
     if (chance(0.25)) {
       if (params === "") divergesFromPostcss = true;

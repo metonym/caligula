@@ -79,7 +79,7 @@ A compound's `classes` are what an element must have to match: its own `.a`, plu
 - **Deliberate differences from PostCSS:**
   - `<` is never escaped.
   - A reversed BOM (U+FFFE) is left as-is; PostCSS rewrites it to U+FEFF.
-  - `postcss-discard-empty`'s extra deletions (empty declarations, rules with an empty selector in the source, paramless `@foo;`, duplicate empty named `@layer`) aren't reproduced. A rule a visitor rewrites to `""` is dropped, as PostCSS does.
+  - `postcss-discard-empty`'s extra deletions (empty declarations, rules with an empty selector in the source, paramless `@foo;`) aren't reproduced. A rule a visitor rewrites to `""` is dropped, as PostCSS does.
 
 ## Benchmarks
 
