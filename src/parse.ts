@@ -4,7 +4,6 @@ import {
   BOM_REVERSED,
   COMMA,
   DASH,
-  SEMICOLON,
   STAR,
   UNDERSCORE,
 } from "./chars";
@@ -29,7 +28,6 @@ import {
   bail,
   type Child,
   CssNode,
-  D_AFTER_SEMI,
   D_CUSTOM,
   D_SEMI,
   Decls,
@@ -343,13 +341,7 @@ export class Parser {
       [valueStart, valueEnd, text] = this.value(colon + 1, last, custom);
     }
 
-    let flags = (semi ? D_SEMI : 0) | (custom ? D_CUSTOM : 0);
-    if (
-      starts[0] > this.trivia &&
-      css.charCodeAt(starts[0] - 1) === SEMICOLON
-    ) {
-      flags |= D_AFTER_SEMI;
-    }
+    const flags = (semi ? D_SEMI : 0) | (custom ? D_CUSTOM : 0);
     const index = this.decls.push(
       start,
       ends[0],
