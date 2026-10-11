@@ -173,6 +173,16 @@ const HOSTILE: Record<string, string> = {
     ".btn{a:b;;--x:y;/**/.unused{c:d}}.a{;--x:y;/**/.unused{c:d}}.b{--x:y;/**/.unused{c:d}}.c{; --x:y;/**/.unused{c:d}}",
   "custom property inherits a stray semicolon":
     ";.unused{a:b}--x:y;/**/.unused{c:d}",
+  "empty @layer after one that fixes its order":
+    "@layer a{.btn{c:d}}@layer a{.unused{a:b}}@layer b,c.d;@layer b{.unused{a:b}}@layer c{.unused{a:b}}@LAYER c.d{.unused{a:b}}",
+  "empty @layer whose order only a condition fixed":
+    "@media print{@layer a{.btn{c:d}}@layer a{.unused{a:b}}}@layer a{.unused{a:b}}@supports (x:y){@layer b;}@layer b{.unused{a:b}}",
+  "empty @layer nested in a layer":
+    "@layer a{@layer b{.btn{c:d}}}@layer a.b{.unused{a:b}}@layer a{@layer b{.unused{a:b}}}@layer b{.unused{a:b}}",
+  "empty @layer named by a hex escape and its space":
+    "@layer \\61 .b;@layer a.b{.unused{a:b}}@layer \\61 \\62{.unused{a:b}}@layer ab{.unused{a:b}}",
+  "empty @layer with escaped or invalid names":
+    "@layer \\61,b/**/./**/c,d .e,inherit;@layer a{.unused{a:b}}@layer d{.unused{a:b}}@layer b.c{.unused{a:b}}@layer x,y{.unused{a:b}}@layer{.unused{a:b}}@layer --x;@layer --x{.unused{a:b}}",
   "paren inside an unsafe paren span": '.btn{b:((url) (x;"y))}.unused{a:b}',
   "comment right after a paren": ".btn(/*c*/ x){a:b}.unused(/*c*/ x){a:b}",
 };
@@ -236,11 +246,6 @@ const BEHAVIOR_CHANGES: Record<
     "{color:red}.btn{a:b}",
     "{color:red}.btn{a:b}",
     0,
-  ],
-  "duplicate empty named @layer kept, not deduplicated": [
-    "@layer a{.btn{c:d}}@layer a{.unused{a:b}}",
-    "@layer a{.btn{c:d}}@layer a{}",
-    1,
   ],
 };
 

@@ -1,4 +1,5 @@
 import { Emitter } from "./emit";
+import { layerNames, SEPARATOR } from "./layer";
 import { Parser } from "./parse";
 import { parseSelectorList } from "./selector";
 import { SourceMapBuilder } from "./source-map";
@@ -9,7 +10,6 @@ import {
   type Decls,
   N_AT_BLOCK,
   N_AT_STATEMENT,
-  N_ROOT,
   N_RULE,
 } from "./tree";
 
@@ -108,7 +108,9 @@ class Filter {
       root.dirty = false;
       this.visit(root, false);
     }
-    if (this.options.discardEmpty !== false) discardEmpty(root, this.css);
+    if (this.options.discardEmpty !== false) {
+      new EmptyDiscarder(this.css).children(root, "");
+    }
   }
 
   private visit(node: CssNode, all: boolean): void {
@@ -189,28 +191,99 @@ function markDirty(node: CssNode | null): void {
   for (let n = node; n !== null && !n.dirty; n = n.parent) n.dirty = true;
 }
 
-function discardEmpty(node: CssNode, css: string): void {
-  if (node.rewritten && node.text === "") {
-    node.removed = true;
-    return;
+function isLayer(node: CssNode): boolean {
+  return node.name.length === 5 && node.name.toLowerCase() === "layer";
+}
+
+/**
+ * An empty `@layer a{}` is kept, since it can fix the order of `a`, unless
+ * an earlier statement or block already did: at top level, or inside a
+ * condition that also encloses the empty block.
+ */
+class EmptyDiscarder {
+  private css: string;
+  /** Layers declared in each open condition, top level first. */
+  private scopes: (Set<string> | null)[] = [null];
+  private anonymous = 0;
+
+  constructor(css: string) {
+    this.css = css;
   }
-  const nodes = node.nodes;
-  if (nodes === null) return;
-  let kept = 0;
-  for (let i = 0; i < nodes.length; i++) {
-    const child = nodes[i];
-    if (typeof child !== "number") {
-      if (child.removed) continue;
-      discardEmpty(child, css);
-      if (child.removed) continue;
+
+  /** Visits the children of `node`, inside layer `layer`; returns how many are kept. */
+  children(node: CssNode, layer: string): number {
+    const nodes = node.nodes as Child[];
+    let kept = 0;
+    for (let i = 0; i < nodes.length; i++) {
+      const child = nodes[i];
+      if (typeof child !== "number") {
+        if (child.removed) continue;
+        this.visit(child, layer);
+        if (child.removed) continue;
+      }
+      kept++;
     }
-    kept++;
+    return kept;
   }
-  const namedLayer =
-    node.type === N_AT_BLOCK &&
-    node.name === "layer" &&
-    node.read(css).trim() !== "";
-  if (kept === 0 && node.type !== N_ROOT && !namedLayer) node.removed = true;
+
+  private visit(node: CssNode, layer: string): void {
+    if (node.rewritten && node.text === "") {
+      node.removed = true;
+      return;
+    }
+    const layered = isLayer(node);
+    if (node.nodes === null) {
+      const names = layered ? layerNames(node.read(this.css)) : undefined;
+      if (names) for (const name of names) this.declare(layer, name);
+      return;
+    }
+
+    let name: string | undefined;
+    let key = layer;
+    if (layered) {
+      const names = layerNames(node.read(this.css));
+      if (names?.length === 1) name = names[0];
+      key = join(layer, name ?? SEPARATOR + this.anonymous++);
+    } else {
+      this.scopes.push(null);
+    }
+    const kept = this.children(node, key);
+    if (!layered) this.scopes.pop();
+
+    if (
+      kept === 0 &&
+      (!layered ||
+        node.read(this.css).trim() === "" ||
+        (name !== undefined && this.declared(key)))
+    ) {
+      node.removed = true;
+    } else if (name !== undefined) {
+      this.declare(layer, name);
+    }
+  }
+
+  private declared(key: string): boolean {
+    return this.scopes.some((scope) => scope?.has(key) === true);
+  }
+
+  /** Naming `a.b` also creates `a`. */
+  private declare(layer: string, name: string): void {
+    const scopes = this.scopes;
+    let scope = scopes[scopes.length - 1];
+    if (scope === null) {
+      scope = new Set();
+      scopes[scopes.length - 1] = scope;
+    }
+    let key = layer;
+    for (const segment of name.split(SEPARATOR)) {
+      key = join(key, segment);
+      scope.add(key);
+    }
+  }
+}
+
+function join(layer: string, name: string): string {
+  return layer === "" ? name : layer + SEPARATOR + name;
 }
 
 /**
