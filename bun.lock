@@ -13,7 +13,7 @@
         "carbon-components-svelte": "0.112.1",
         "knip": "^6.39.0",
         "lightningcss": "1.33.0",
-        "ostia": "^0.2.9",
+        "ostia": "^0.2.11",
         "postcss": "^8.5.28",
         "postcss-discard-empty": "^9.0.2",
         "source-map-js": "^1.2.2",
@@ -255,7 +255,7 @@
 
     "nanoid": ["nanoid@3.3.19", "", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug=="],
 
-    "ostia": ["ostia@0.2.9", "", { "bin": { "ostia": "cli.js" } }, "sha512-lgGN6lFX5RNhPiTlyFPOvjPAD0x33LQiEV/mVrbuia1Y859U3+doMyXIbGv4/NfeCYv/3envldiuUzBCiimuUg=="],
+    "ostia": ["ostia@0.2.11", "", { "bin": { "ostia": "cli.js" } }, "sha512-mVtHXSNxt2+oYB812R+fNqNa8WnllRwvOHYoXfT3EKJqnHayRQV99QAK+X/YExyJMI+RiZUVb56c4OupVx23Jg=="],
 
     "oxc-parser": ["oxc-parser@0.150.0", "", { "dependencies": { "@oxc-project/types": "^0.150.0" }, "optionalDependencies": { "@oxc-parser/binding-android-arm-eabi": "0.150.0", "@oxc-parser/binding-android-arm64": "0.150.0", "@oxc-parser/binding-darwin-arm64": "0.150.0", "@oxc-parser/binding-darwin-x64": "0.150.0", "@oxc-parser/binding-freebsd-x64": "0.150.0", "@oxc-parser/binding-linux-arm-gnueabihf": "0.150.0", "@oxc-parser/binding-linux-arm-musleabihf": "0.150.0", "@oxc-parser/binding-linux-arm64-gnu": "0.150.0", "@oxc-parser/binding-linux-arm64-musl": "0.150.0", "@oxc-parser/binding-linux-ppc64-gnu": "0.150.0", "@oxc-parser/binding-linux-riscv64-gnu": "0.150.0", "@oxc-parser/binding-linux-riscv64-musl": "0.150.0", "@oxc-parser/binding-linux-s390x-gnu": "0.150.0", "@oxc-parser/binding-linux-x64-gnu": "0.150.0", "@oxc-parser/binding-linux-x64-musl": "0.150.0", "@oxc-parser/binding-openharmony-arm64": "0.150.0", "@oxc-parser/binding-win32-arm64-msvc": "0.150.0", "@oxc-parser/binding-win32-ia32-msvc": "0.150.0", "@oxc-parser/binding-win32-x64-msvc": "0.150.0" } }, "sha512-zwajKw1GUa57IOdafIS7/yOObGF2NihwIfZfs5yJTRprMSkiwhWOc/k+n8bwnUPbHr2/XsjfBO8KyTPaW3VpWg=="],
 

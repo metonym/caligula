@@ -64,6 +64,7 @@ Changes to `src/` must not make things slower. The workloads live in `bench/work
 | Command | Use |
 |:---|:---|
 | `bun run bench:ab` | **The regression check** (`ostia ab`). Runs `HEAD` (or `--base <ref>`) and the working tree alternately in one process, re-checks anything flagged in fresh processes, and fails on a confirmed regression over 10% or a geomean over 1.5%. Also lists workloads whose output changed, so tasks return `filterCss`'s result. Narrow with `--filter 'source map' --rounds 21`. |
+| `bun run bench:ab:mem` | The memory regression check: `ostia ab --peak-mem` on the `memory:` workloads. Reads how far the first call raises RSS on both sides, median of 3 fresh processes each, and fails when it grows over 20% and 1 MiB. Back-to-back runs of identical code differ by up to ~11% on peak, hence 20%; `--alloc` on these inputs is noisier still, so check leaks with `bench:caligula --alloc`. |
 | `bun run bench:caligula` | Per-workload numbers with ostia (`--filter` to narrow, `--alloc` for retained heap per call: a leak check, ~0 is correct) |
 | `bun run bench:mem` | Peak memory (`--peak-mem`) of the `memory:` workloads: how far the first call raises RSS, median of 3 fresh processes, after warming the JIT on a 20 kB slice |
 | `bun run bench:cold [src dir]` | First-call latency, fresh process per stylesheet |
@@ -96,5 +97,5 @@ Pitfalls seen before:
 
 - [ ] `bun run lint`, `bun run typecheck`, `bun run test` and `bun run test:package` pass.
 - [ ] Parser or visitor changes: the 20-seed long fuzz passes, and a hostile case covers the change.
-- [ ] `src/` changes: `bun run bench:ab` shows no confirmed regression.
+- [ ] `src/` changes: `bun run bench:ab` and `bun run bench:ab:mem` show no confirmed regression.
 - [ ] The README and this guide still describe what the code does.
