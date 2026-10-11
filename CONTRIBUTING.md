@@ -24,19 +24,22 @@ bun run build         # dist/: minified ESM, index.d.ts, slimmed package.json
 3. **Visit** (`src/index.ts`, `Filter`). It walks in PostCSS's order (visitor, then children), then replays PostCSS's revisit loop: a rewritten rule, and the parent of a removed node, are marked dirty and walked again until nothing is dirty. Then it applies `postcss-discard-empty`'s container rule.
 4. **Emit** (`src/emit.ts`). It copies kept source spans, skips removed nodes with their leading trivia, inserts rewritten selectors, and adds or drops `;` per the stringifier's rules. Every chunk goes through `copy`/`insert`, which is where `src/source-map.ts` gets its segments. `src/chars.ts` holds the shared character codes.
 
+`src/selector.ts` is the `caligula/selector` entry: it splits and parses selectors into compounds, combinators and the classes each compound requires. `filterCss` uses it only when a `rule` visitor reads `parsed`, so a visitor that doesn't read it pays nothing. It reads selectors with a local index rather than the scanner, and is lenient: malformed input parses as well as it can, and never throws (except `parseSelector` given a list).
+
 ## Rules every change must keep
 
 - **PostCSS parity is the contract.** For every input the parser doesn't bail on, the output and every string a visitor sees (selector, at-rule name and params, `walkDecls` prop and value) must equal what PostCSS produces with the same visitors plus `postcss-discard-empty`. Behavior that intentionally differs is listed in the README under "Deliberate differences" and asserted in `tests/parity.test.ts` (`BEHAVIOR_CHANGES`). Adding to that list needs a strong reason.
 - **Bail rather than guess.** When the parser can't be sure of PostCSS's reading, it throws `BAIL` and the input passes through unchanged (`skipped: true`). Every PostCSS syntax error must bail. Bailing on ordinary CSS costs coverage: Bootstrap, Carbon and the modern-syntax cases must never bail.
 - **Original code only.** Don't copy or translate code from PostCSS or any other CSS parser. Learn PostCSS's behavior by running it (`postcss.parse`, inspecting nodes and `raws`, `toString()`) and encode it as tests. This keeps the package free of third-party license notices.
 - **No runtime dependencies and no Node APIs in `src/`.** The build targets browsers, Node, Bun and Deno alike. Dev-only code (`tests/`, `bench/`, `scripts/`) may use anything.
-- **Keep the public API small.** `src/index.ts` exports `filterCss` and the types it uses (`FilterOptions`, `FilterResult`, `SourceMap`), nothing else. It declares every public type, so `dist/index.d.ts` is that file's own declaration emit. New options must default to current behavior.
+- **Keep the public API small.** `src/index.ts` exports `filterCss` and the types it uses (`FilterOptions`, `FilterResult`, `SourceMap`, and the parsed selector types), nothing else; `src/selector.ts` exports the selector functions. `src/index.ts` declares every public type, so `dist/index.d.ts` is that file's own declaration emit, and `dist/selector.d.ts` imports its types from it. New options must default to current behavior.
 
 ## Tests
 
 | File | Covers |
 |:---|:---|
 | `tests/api.test.ts` | The public API contract: options, results, skipping, errors, map options |
+| `tests/selector.test.ts` | `caligula/selector`: splitting, compounds and combinators, `:is`/`:not`/`:has`, escapes, malformed input, and a cross-check against a naive reading of the corpora |
 | `tests/parity.test.ts` | Parity on the real stylesheets in `bench/corpora.ts` (plus no-op identity and source maps), hostile inputs (`HOSTILE`), deliberate differences, syntax errors |
 | `tests/fuzz.test.ts` | The seeded differential fuzzer |
 | `tests/helpers.ts` | The PostCSS reference, the visitor scenarios, and the source map checker |

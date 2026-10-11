@@ -1,4 +1,5 @@
 import { type FilterOptions, type FilterResult, filterCss } from "caligula";
+import { parseSelectorList } from "caligula/selector";
 import postcss from "postcss";
 import discardEmpty from "postcss-discard-empty";
 import { SourceMapConsumer } from "source-map-js";
@@ -9,7 +10,13 @@ export function postcssReference(css: string, options: FilterOptions) {
     {
       postcssPlugin: "reference",
       Rule(rule) {
-        const result = options.rule?.({ selector: rule.selector });
+        const { selector } = rule;
+        const result = options.rule?.({
+          selector,
+          get parsed() {
+            return parseSelectorList(selector);
+          },
+        });
         if (result === false) {
           rule.remove();
           removed++;

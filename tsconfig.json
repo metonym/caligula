@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
-      "caligula": ["./src/index.ts"]
+      "caligula": ["./src/index.ts"],
+      "caligula/selector": ["./src/selector.ts"]
     },
     "types": ["jest"]
   },

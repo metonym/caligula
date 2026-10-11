@@ -13,6 +13,29 @@ test("removes and rewrites rules", () => {
   });
 });
 
+test("rule sees each selector parsed, computed once when first read", () => {
+  const seen: unknown[] = [];
+  filterCss(".a > .b:not(.c), .d{}", {
+    rule(rule) {
+      expect(rule.parsed).toBe(rule.parsed);
+      seen.push(
+        rule.selector,
+        rule.parsed.map((p) => [p.text, p.subject.classes, p.combinators]),
+      );
+      return rule.selector.includes(",") ? ".e" : undefined;
+    },
+  });
+  expect(seen).toEqual([
+    ".a > .b:not(.c), .d",
+    [
+      [".a > .b:not(.c)", ["b"], [">"]],
+      [".d", ["d"], []],
+    ],
+    ".e",
+    [[".e", ["e"], []]],
+  ]);
+});
+
 test("drops emptied containers unless discardEmpty is false", () => {
   const css = "@media print{.a{color:red}}.b{}";
   const rule = () => false;
