@@ -112,7 +112,6 @@ export class CssNode {
 
 export const D_SEMI = 1;
 export const D_CUSTOM = 2;
-export const D_AFTER_SEMI = 4;
 
 export function grow<T extends Uint8Array | Int32Array>(array: T): T {
   const next = new (array.constructor as new (size: number) => T)(

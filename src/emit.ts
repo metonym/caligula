@@ -1,9 +1,7 @@
-import { SEMICOLON } from "./chars";
 import type { SourceMapBuilder } from "./source-map";
 import {
   type Child,
   type CssNode,
-  D_AFTER_SEMI,
   D_CUSTOM,
   D_SEMI,
   type Decls,
@@ -94,12 +92,8 @@ export class Emitter {
 
       if (typeof node === "number") {
         const flags = decls.flags[node];
-        // A custom property keeps its `;` unless a stray `;` precedes it.
-        const afterSemi = inherits
-          ? inherited.start > inherited.before &&
-            this.css.charCodeAt(inherited.start - 1) === SEMICOLON
-          : (flags & D_AFTER_SEMI) !== 0;
-        const forced = (flags & D_CUSTOM) !== 0 && !afterSemi;
+        // A custom property keeps its `;` before a following node.
+        const forced = (flags & D_CUSTOM) !== 0;
         this.semicolon(
           decls.end[node],
           (flags & D_SEMI) !== 0,
