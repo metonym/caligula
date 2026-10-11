@@ -1,6 +1,6 @@
 {
   "name": "caligula",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "description": "Zero-dependency CSS filter: remove rules and rewrite selectors with PostCSS-identical output, 6-13x faster than PostCSS.",
   "author": "Eric Liu (https://github.com/metonym)",
