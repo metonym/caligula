@@ -87,9 +87,9 @@ Apple M2, medians of warm calls. The filter job drops every rule whose selector 
 
 | Stylesheet | Job | caligula | PostCSS | Lightning CSS[^lightning] |
 |:---|:---|:---|:---|:---|
-| Carbon `white.css`, 710 kB min | filter | **3.4 ms** | 26.8 ms (7.9×) | 31.7 ms (9.4×) |
-| | filter + source map | **4.0 ms** | 23.7 ms (5.9×) | – |
-| | round trip | **2.6 ms** | 18.0 ms (6.9×) | 11.3 ms (4.3×) |
+| Carbon `white.css`, 562 kB min | filter | **2.9 ms** | 18.5 ms (6.3×) | 28.7 ms (9.8×) |
+| | filter + source map | **3.4 ms** | 20.6 ms (6.1×) | – |
+| | round trip | **2.4 ms** | 16.0 ms (6.8×) | 10.0 ms (4.2×) |
 | `bootstrap.css`, 280 kB formatted | filter | **1.4 ms** | 17.7 ms (13×) | 13.0 ms (9.6×) |
 | | filter + source map | **1.8 ms** | 11.6 ms (6.5×) | – |
 | | round trip | **1.2 ms** | 11.8 ms (9.9×) | 4.5 ms (3.8×) |
@@ -99,7 +99,7 @@ Apple M2, medians of warm calls. The filter job drops every rule whose selector 
 | Tailwind v4-shaped utilities, 145 kB | filter | **0.77 ms** | 5.8 ms (7.6×) | 13.9 ms (18×) |
 | | round trip | **0.82 ms** | 6.3 ms (7.7×) | 4.3 ms (5.2×) |
 
-The first call in a fresh process runs about 2–3× slower while the JIT warms up (Carbon: 9.7 ms). Peak memory is about 3–7× the input size.
+The first call in a fresh process runs about 2–3× slower while the JIT warms up (Carbon: 9.5 ms). Peak memory is about 3–7× the input size.
 
 [^lightning]: Lightning CSS does a different job: it re-prints the stylesheet (so it doesn't preserve the source) and can do much more (minify, lower syntax, bundle). Its filter runs a JS visitor; its round trip is native only.
 
