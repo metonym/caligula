@@ -29,7 +29,7 @@
     "@types/jest": "^30.0.0",
     "@typescript/typescript6": "^6.0.2",
     "bootstrap": "5.3.8",
-    "carbon-components-svelte": "0.112.1",
+    "carbon-components-svelte": "0.113.1",
     "knip": "^6.41.0",
     "lightningcss": "1.33.0",
     "ostia": "^0.2.11",

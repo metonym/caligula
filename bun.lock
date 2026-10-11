@@ -10,7 +10,7 @@
         "@types/jest": "^30.0.0",
         "@typescript/typescript6": "^6.0.2",
         "bootstrap": "5.3.8",
-        "carbon-components-svelte": "0.112.1",
+        "carbon-components-svelte": "0.113.1",
         "knip": "^6.41.0",
         "lightningcss": "1.33.0",
         "ostia": "^0.2.11",
@@ -183,7 +183,7 @@
 
     "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
 
-    "carbon-components-svelte": ["carbon-components-svelte@0.112.1", "", { "dependencies": { "@ibm/telemetry-js": "^1.5.0", "flatpickr": "4.6.9" } }, "sha512-XziZ4Npwli6kY6IJ5LA0jbrqwpcPueEDAerW3Qx2ww8J1j3r+C8dys14yYX+RZABUReFEYfRlHlxCnFeI3/CAg=="],
+    "carbon-components-svelte": ["carbon-components-svelte@0.113.1", "", { "dependencies": { "@ibm/telemetry-js": "^1.10.2", "flatpickr": "4.6.13" } }, "sha512-RAQhRAZkDkH/aEo49WHI/wUg6boHg13eypjKaykeqQULyZ4DLqkiLKrs1uHxhmDtMIugXoCBSAm10vHBjY70tQ=="],
 
     "chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
@@ -205,7 +205,7 @@
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
-    "flatpickr": ["flatpickr@4.6.9", "", {}, "sha512-F0azNNi8foVWKSF+8X+ZJzz8r9sE1G4hl06RyceIaLvyltKvDl6vqk9Lm/6AUUCi5HWaIjiUbk7UpeE/fOXOpw=="],
+    "flatpickr": ["flatpickr@4.6.13", "", {}, "sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw=="],
 
     "formatly": ["formatly@0.11.4", "", { "dependencies": { "fd-package-json": "^2.0.0", "package-manager-detector": "^1.8.0" }, "bin": { "formatly": "bin/index.mjs" } }, "sha512-TeCC10lP8KCgoX+Fe5lryILIT0/Dy+nP0OSVnsuB5CwXoLuOdqxCYlPFF1inR8S/zTy1ec7TjhS2TeRKWzzImA=="],
 
