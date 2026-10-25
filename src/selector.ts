@@ -161,7 +161,7 @@ function skipToken(s: string, i: number, code: number): number {
     return i < s.length ? i + 1 : s.length;
   }
   if (code !== BACKSLASH) return i;
-  return i + 2 < s.length ? i + 2 : s.length;
+  return Math.min(i + 2, s.length);
 }
 
 /** Past the `close` that ends the block whose opener is just before `i`. */
