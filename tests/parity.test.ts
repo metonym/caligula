@@ -55,6 +55,26 @@ describe("real stylesheets", () => {
   }
 });
 
+// Prunes custom properties nothing reads, the way carbon-preprocess-svelte
+// prunes Carbon's design tokens: first the rules, then the declarations.
+describe("real stylesheets, custom properties", () => {
+  for (const { name, css, keep } of CORPORA) {
+    test(name, () => {
+      const rules = filterCss(css, { rule: keepOnly(keep) }).css;
+      const read = new Set(
+        Array.from(rules.matchAll(/var\(\s*(--[\w-]+)/g), (m) => m[1]),
+      );
+      const options: FilterOptions = {
+        decl: ({ prop }) => !prop.startsWith("--") || read.has(prop),
+      };
+      const result = filterCss(rules, options);
+      expect(result.skipped).toBe(false);
+      expect(result.css).toBe(postcssReference(rules, options).css);
+      expect(result.removed).toBe(postcssReference(rules, options).removed);
+    });
+  }
+});
+
 const FF = (family: string, style: string, weight: string) =>
   `@font-face{font-family:${family};font-style:${style};font-weight:${weight}}`;
 
@@ -78,6 +98,27 @@ const HOSTILE: Record<string, string> = {
   "lone cr and form feed": ".btn\r{\fcolor:red;\r}\f.unused{x:y}\r",
   unicode: '.btn::before{content:"→ ünïcödé"}.ünused{x:y}.unused💥{x:y}',
   "leading ws inherited by new first node": "\n\n.unused{a:b}\n.btn{c:d}\n",
+  "decl removed first": ".btn{color:red;a:b}",
+  "decl removed last": ".btn{a:b;color:red}",
+  "decl removed last with semicolon": ".btn{a:b ; color:red ;\n}",
+  "decl removed only": ".btn{color:red}.x{a:b}",
+  "decl removed spacing": ".btn{\n  a: b;\n  color: red;\n  c: d\n}",
+  "decl removed between comments": ".btn{a:b;/*c*/color:red/*d*/;e:f}",
+  "decl removed important": ".btn{a:b;color:red!important}",
+  "decl removed star hack": ".btn{*color:red;a:b}",
+  "decl removed custom properties":
+    ":root{--x:1;--unused:var(--x);--y: a ;--unused-2:{a:b}}",
+  "decl removed custom property before rule": ".btn{--unused:1;&:hover{a:b}}",
+  "decl removed root first": "\n color:red;\n.btn{a:b}",
+  "decl removed root first before decl": " color:red; *zoom:1",
+  "decl removed font-face": "@font-face{color:red;font-weight:700}",
+  "decl removed before trailing comment":
+    ".btn{color:red/*c*/}@media x{color:red /*c*/ }",
+  "decl removed at root before trailing comment": "\r\ncolor: \n x /*c*/\n",
+  "decl removed at root before trailing comment, after a removed rule":
+    ".unused{a:b}\r\ncolor:\tx /*c*/\f",
+  "decl removed before trailing comment, custom property kept":
+    ".btn{--x:1;color:red/*c*/}",
   "leading ws chain":
     ".unused1{}\n.unused2{a:b}\n\n.unused3{a:b}\n.btn{a:b}\n.unused4{a:b}",
   "all removed": "\n.unused{a:b}\n.unused2{c:d}\n\n",
@@ -198,6 +239,7 @@ describe("hostile inputs", () => {
 // Parity holds only with `discardEmpty` off: `postcss-discard-empty` drops
 // what `filterCss` keeps on purpose.
 const HOSTILE_KEEP_EMPTY: Record<string, string> = {
+  "decl removed only": ".btn{color:red}@media x{color:red}",
   "paramless at-rule at EOF owns its trailing whitespace": ".btn{a:b}@foo \n",
   "paramless at-rule at EOF owns its trailing comment": ".btn{a:b}@foo/**/",
 };

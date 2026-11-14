@@ -53,6 +53,7 @@ test(`fuzz (seed ${SEED}, ${RUNS} sheets)`, () => {
     "font-family",
     "font-weight",
     "--x",
+    "--unused",
     "src",
     "content",
     "*zoom",

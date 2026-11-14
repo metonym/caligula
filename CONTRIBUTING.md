@@ -28,7 +28,7 @@ bun run build         # dist/: minified ESM, index.d.ts, slimmed package.json
 
 ## Rules every change must keep
 
-- **PostCSS parity is the contract.** For every input the parser doesn't bail on, the output and every string a visitor sees (selector, at-rule name and params, `walkDecls` prop and value) must equal what PostCSS produces with the same visitors plus `postcss-discard-empty`. Behavior that intentionally differs is listed in the README under "Deliberate differences" and asserted in `tests/parity.test.ts` (`BEHAVIOR_CHANGES`). Adding to that list needs a strong reason.
+- **PostCSS parity is the contract.** For every input the parser doesn't bail on, the output and every string a visitor sees (selector, at-rule name and params, `decl` and `walkDecls` prop and value) must equal what PostCSS produces with the same visitors plus `postcss-discard-empty`. Behavior that intentionally differs is listed in the README under "Deliberate differences" and asserted in `tests/parity.test.ts` (`BEHAVIOR_CHANGES`). Adding to that list needs a strong reason.
 - **Bail rather than guess.** When the parser can't be sure of PostCSS's reading, it throws `BAIL` and the input passes through unchanged (`skipped: true`). Every PostCSS syntax error must bail. Bailing on ordinary CSS costs coverage: Bootstrap, Carbon and the modern-syntax cases must never bail.
 - **Original code only.** Don't copy or translate code from PostCSS or any other CSS parser. Learn PostCSS's behavior by running it (`postcss.parse`, inspecting nodes and `raws`, `toString()`) and encode it as tests. This keeps the package free of third-party license notices.
 - **No runtime dependencies and no Node APIs in `src/`.** The build targets browsers, Node, Bun and Deno alike. Dev-only code (`tests/`, `bench/`, `scripts/`) may use anything.
@@ -45,7 +45,7 @@ bun run build         # dist/: minified ESM, index.d.ts, slimmed package.json
 | `tests/helpers.ts` | The PostCSS reference, the visitor scenarios, and the source map checker |
 | `scripts/test-package.ts` | `bun run test:package`: packs `dist/`, installs it into a scratch project, runs it in Node, and type-checks a consumer against the published types |
 
-Parity cases compare output, `removed`, and the full log of visitor calls (including `walkDecls` values) across seven visitor scenarios, and check the source map of each.
+Parity cases compare output, `removed`, and the full log of visitor calls (including `decl` and `walkDecls` values) across ten visitor scenarios, and check the source map of each.
 
 - **A behavior fix needs a hostile case** that fails before the fix and passes after, in `HOSTILE` (or `HOSTILE_KEEP_EMPTY` when `postcss-discard-empty` would hide it).
 - **Run the long fuzz before merging parser or visitor changes:**

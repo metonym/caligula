@@ -7,6 +7,8 @@ import {
   BAIL,
   type Child,
   type CssNode,
+  D_COMMENTS,
+  D_REMOVED,
   type Decls,
   N_AT_BLOCK,
   N_AT_STATEMENT,
@@ -52,6 +54,11 @@ export type FilterOptions = {
     /** Only for at-rules named in `readDecls`. */
     walkDecls(callback: (prop: string, value: string) => void): void;
   }) => boolean | undefined;
+  /**
+   * Return `false` to remove the declaration. Called for every declaration
+   * whose rule or at-rule is kept, after that container's own visitor.
+   */
+  decl?: (decl: { prop: string; value: string }) => boolean | undefined;
   /** At-rule names whose declarations `atRule` reads with `walkDecls`. */
   readDecls?: readonly string[];
   /** Drop rules and at-rules left empty, like `postcss-discard-empty`. Default `true`. */
@@ -71,6 +78,7 @@ export type FilterResult = {
   css: string;
   /** The input was returned unchanged: a syntax error, or CSS caligula can't reproduce exactly. */
   skipped: boolean;
+  /** Rules, at-rules and declarations the visitors removed. */
   removed: number;
   map?: SourceMap;
 };
@@ -103,13 +111,14 @@ class Filter {
   }
 
   run(root: CssNode): void {
-    if (this.options.rule || this.options.atRule) this.visit(root, true);
+    const { rule, atRule, decl } = this.options;
+    if (rule || atRule || decl) this.visit(root, true);
     while (root.dirty) {
       root.dirty = false;
       this.visit(root, false);
     }
     if (this.options.discardEmpty !== false) {
-      new EmptyDiscarder(this.css).children(root, "");
+      new EmptyDiscarder(this.css, this.decls).children(root, "");
     }
   }
 
@@ -120,9 +129,15 @@ class Filter {
     }
     const nodes = node.nodes;
     if (node.removed || nodes === null) return;
+    // Declarations are only walked once: nothing marks them dirty.
+    const decl = all ? this.options.decl : undefined;
     for (let i = 0; i < nodes.length; i++) {
       const child = nodes[i];
-      if (typeof child === "number" || child.removed) continue;
+      if (typeof child === "number") {
+        if (decl) this.visitDecl(node, child, decl);
+        continue;
+      }
+      if (child.removed) continue;
       if (all || child.dirty) {
         child.dirty = false;
         this.visit(child, all);
@@ -160,6 +175,26 @@ class Filter {
     if (result === false) this.remove(node);
   }
 
+  private visitDecl(
+    parent: CssNode,
+    index: number,
+    visitor: NonNullable<FilterOptions["decl"]>,
+  ): void {
+    const { css, decls } = this;
+    const result = visitor({
+      prop: css.slice(decls.start[index], decls.propEnd[index]),
+      value:
+        decls.text.get(index) ??
+        css.slice(decls.valueStart[index], decls.valueEnd[index]),
+    });
+    if (result === false) {
+      decls.flags[index] |= D_REMOVED;
+      decls.removed++;
+      this.removed++;
+      markDirty(parent);
+    }
+  }
+
   private walkDecls(
     nodes: Child[],
     callback: (prop: string, value: string) => void,
@@ -168,6 +203,9 @@ class Filter {
     for (let i = 0; i < nodes.length; i++) {
       const child = nodes[i];
       if (typeof child === "number") {
+        if (decls.removed > 0 && (decls.flags[child] & D_REMOVED) !== 0) {
+          continue;
+        }
         callback(
           css.slice(decls.start[child], decls.propEnd[child]),
           decls.text.get(child) ??
@@ -202,21 +240,32 @@ function isLayer(node: CssNode): boolean {
  */
 class EmptyDiscarder {
   private css: string;
+  private decls: Decls;
   /** Layers declared in each open condition, top level first. */
   private scopes: (Set<string> | null)[] = [null];
   private anonymous = 0;
 
-  constructor(css: string) {
+  constructor(css: string, decls: Decls) {
     this.css = css;
+    this.decls = decls;
   }
 
   /** Visits the children of `node`, inside layer `layer`; returns how many are kept. */
   children(node: CssNode, layer: string): number {
     const nodes = node.nodes as Child[];
+    const declsRemoved = this.decls.removed > 0;
     let kept = 0;
     for (let i = 0; i < nodes.length; i++) {
       const child = nodes[i];
-      if (typeof child !== "number") {
+      if (typeof child === "number") {
+        // Its trailing comments stay, and keep the container.
+        if (
+          declsRemoved &&
+          (this.decls.flags[child] & (D_REMOVED | D_COMMENTS)) === D_REMOVED
+        ) {
+          continue;
+        }
+      } else {
         if (child.removed) continue;
         this.visit(child, layer);
         if (child.removed) continue;
@@ -287,8 +336,9 @@ function join(layer: string, name: string): string {
 }
 
 /**
- * Removes rules and at-rules, or rewrites selectors, with output identical to
- * the same visitors run as a PostCSS plugin plus `postcss-discard-empty`.
+ * Removes rules, at-rules and declarations, or rewrites selectors, with
+ * output identical to the same visitors run as a PostCSS plugin plus
+ * `postcss-discard-empty`.
  */
 export function filterCss(
   css: string,
@@ -297,6 +347,7 @@ export function filterCss(
   const parser = new Parser(
     css,
     options.readDecls && new Set(options.readDecls.map((n) => n.toLowerCase())),
+    options.decl !== undefined,
   );
   let root: CssNode;
   try {
