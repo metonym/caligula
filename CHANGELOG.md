@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-11-14
+
+**Features**
+
+- Add a `decl` visitor. Return `false` to remove a declaration, with its leading whitespace, as `decl.remove()` would. It's called for every declaration in a kept rule or at-rule, after that container's visitor, and `removed` counts the declarations it removes. Values are only read for every declaration when `decl` is set.
+
+**Fixes**
+
+- Terminate a custom property after a stray semicolon, as postcss 8.5.29 does.
+- Drop an empty `@layer` whose order is already fixed, as postcss-discard-empty 9.0.8 does.
+
 ## 0.3.0 — 2026-10-11
 
 **Features**
