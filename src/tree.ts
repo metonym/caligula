@@ -112,6 +112,9 @@ export class CssNode {
 
 export const D_SEMI = 1;
 export const D_CUSTOM = 2;
+export const D_REMOVED = 4;
+/** Comments follow the value before `}`: PostCSS reads them as comment nodes. */
+export const D_COMMENTS = 8;
 
 export function grow<T extends Uint8Array | Int32Array>(array: T): T {
   const next = new (array.constructor as new (size: number) => T)(
@@ -131,6 +134,13 @@ export class Decls {
   /** Comment-stripped values, only for declarations that had comments. */
   text = new Map<number, string>();
   count = 0;
+  /**
+   * Start of each declaration's leading whitespace, as `CssNode#before`.
+   * Only kept for a `decl` visitor, which is all that removes declarations.
+   */
+  before: Int32Array | null = null;
+  /** Declarations a `decl` visitor removed. */
+  removed = 0;
 
   constructor(capacity: number) {
     this.start = new Int32Array(capacity);
@@ -166,5 +176,14 @@ export class Decls {
     this.flags[i] = flags;
     this.count = i + 1;
     return i;
+  }
+
+  /** Records the leading whitespace of declaration `i`, the last pushed. */
+  setBefore(i: number, before: number): void {
+    let array = this.before;
+    if (array === null) array = new Int32Array(this.start.length);
+    else if (i === array.length) array = grow(array);
+    array[i] = before;
+    this.before = array;
   }
 }

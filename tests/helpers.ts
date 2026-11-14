@@ -39,6 +39,18 @@ export function postcssReference(css: string, options: FilterOptions) {
       },
     },
   ];
+  const { decl } = options;
+  if (decl) {
+    plugins.push({
+      postcssPlugin: "reference-decl",
+      Declaration(node) {
+        if (decl({ prop: node.prop, value: node.value }) === false) {
+          node.remove();
+          removed++;
+        }
+      },
+    });
+  }
   if (options.discardEmpty !== false) plugins.push(discardEmpty());
   return {
     css: postcss(plugins).process(css, { from: undefined }).css,
@@ -81,6 +93,15 @@ const filterAtRules =
     }
   };
 
+const filterDecls =
+  (calls: string[]): FilterOptions["decl"] =>
+  ({ prop, value }) => {
+    calls.push(`${prop}:${value}`);
+    if (prop === "color" || prop.includes(UNUSED) || value.includes(UNUSED)) {
+      return false;
+    }
+  };
+
 export const SCENARIOS: Record<string, Scenario> = {
   none: () => ({}),
   prune: (calls) => ({ rule: pruneRules(calls) }),
@@ -105,6 +126,18 @@ export const SCENARIOS: Record<string, Scenario> = {
     readDecls: ["font-face"],
     rule: pruneRules(calls),
     atRule: filterAtRules(calls),
+  }),
+  decls: (calls) => ({ decl: filterDecls(calls) }),
+  declsAndRules: (calls) => ({
+    readDecls: ["font-face"],
+    rule: pruneRules(calls),
+    atRule: filterAtRules(calls),
+    decl: filterDecls(calls),
+  }),
+  declsKeepEmpty: (calls) => ({
+    discardEmpty: false,
+    rule: pruneRules(calls),
+    decl: filterDecls(calls),
   }),
   stateful: (calls) => {
     const pattern = /btn/g;

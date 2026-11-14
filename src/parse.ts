@@ -28,6 +28,7 @@ import {
   bail,
   type Child,
   CssNode,
+  D_COMMENTS,
   D_CUSTOM,
   D_SEMI,
   Decls,
@@ -47,6 +48,8 @@ export class Parser {
   decls: Decls;
   private scanner: Scanner;
   private readDeclsIn: ReadonlySet<string> | undefined;
+  /** Read every declaration's value, for a `decl` visitor. */
+  private readValues: boolean;
   private container: CssNode;
   private trivia: number;
   private semicolon = false;
@@ -57,11 +60,16 @@ export class Parser {
   private count = 0;
   private closers: number[] = [];
 
-  constructor(css: string, readDeclsIn?: ReadonlySet<string>) {
+  constructor(
+    css: string,
+    readDeclsIn?: ReadonlySet<string>,
+    readValues = false,
+  ) {
     this.css = css;
     // About one declaration per 32 bytes of compiled CSS.
     this.decls = new Decls(Math.max(64, css.length >> 5));
     this.readDeclsIn = readDeclsIn;
+    this.readValues = readValues;
     const bom = css.charCodeAt(0);
     const start = bom === BOM || bom === BOM_REVERSED ? 1 : 0;
     this.scanner = new Scanner(css, start);
@@ -337,11 +345,16 @@ export class Parser {
     let valueStart = ends[colon];
     let valueEnd = end;
     let text: string | null = null;
-    if (this.container.readDecls) {
+    if (this.readValues || this.container.readDecls) {
       [valueStart, valueEnd, text] = this.value(colon + 1, last, custom);
     }
 
-    const flags = (semi ? D_SEMI : 0) | (custom ? D_CUSTOM : 0);
+    let flags = (semi ? D_SEMI : 0) | (custom ? D_CUSTOM : 0);
+    if (this.readValues) {
+      for (let i = last; i < this.count; i++) {
+        if (kinds[i] === T_COMMENT) flags |= D_COMMENTS;
+      }
+    }
     const index = this.decls.push(
       start,
       ends[0],
@@ -351,6 +364,7 @@ export class Parser {
       flags,
     );
     if (text !== null) this.decls.text.set(index, text);
+    if (this.readValues) this.decls.setBefore(index, this.trivia);
     this.add(index);
     this.semicolon = semi;
     this.trivia = semi ? this.scanner.to : end;

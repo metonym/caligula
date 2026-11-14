@@ -4,7 +4,7 @@
 
 > Zero-dependency CSS filter. PostCSS-identical output, 6–13× faster.
 
-Remove rules and at-rules, or rewrite selectors, with PostCSS-style visitors. caligula edits the source text instead of building an AST, so its output is byte-identical to the same visitors run as a PostCSS plugin (with `postcss-discard-empty`), at a fraction of the cost.
+Remove rules, at-rules and declarations, or rewrite selectors, with PostCSS-style visitors. caligula edits the source text instead of building an AST, so its output is byte-identical to the same visitors run as a PostCSS plugin (with `postcss-discard-empty`), at a fraction of the cost.
 
 ```sh
 bun i caligula
@@ -29,13 +29,24 @@ const { css, map, removed, skipped } = filterCss(source, {
 |:---|:---|
 | `rule({ selector, parsed })` | Return `false` to remove the rule, a string to replace its selector, or anything else to keep it. `parsed` is the selector list parsed by `parseSelectorList` (below), computed the first time it's read. |
 | `atRule({ name, params, walkDecls })` | Return `false` to remove the at-rule. |
+| `decl({ prop, value })` | Return `false` to remove the declaration. Called for every declaration in a kept rule or at-rule, after the visitor of the rule or at-rule that holds it. |
 | `readDecls` | At-rule names (case-insensitive) whose declarations `atRule` reads through `walkDecls(cb(prop, value))`, e.g. `["font-face"]`. |
 | `discardEmpty` | Drop containers left with no children, like `postcss-discard-empty`. Default `true`. |
 | `map` | `true` or `{ source, includeContent }` returns a v3 source map. |
 
-`selector`, `params` and declaration values read exactly as PostCSS's `rule.selector`, `atRule.params` and `decl.value` would: comments dropped per PostCSS's `raw()` rule, `!important` stripped. Visitors run in PostCSS's order, and a rule whose selector was rewritten is visited again, as PostCSS's `Rule` visitor would be.
+`selector`, `params` and declaration values read exactly as PostCSS's `rule.selector`, `atRule.params` and `decl.value` would: comments dropped per PostCSS's `raw()` rule, `!important` stripped. Visitors run in PostCSS's order, and a rule whose selector was rewritten, or that lost a declaration, is visited again, as PostCSS's `Rule` visitor would be. Each declaration is visited once.
 
 To list selectors without changing anything, return nothing from `rule` and check `skipped`.
+
+To drop custom properties nothing reads, run it twice: once to prune rules, then again with `decl` over the result.
+
+```ts
+const { css: pruned } = filterCss(source, { rule });
+const read = new Set(pruned.match(/(?<=var\(\s*)--[\w-]+/g));
+const { css } = filterCss(pruned, {
+  decl: ({ prop }) => !prop.startsWith("--") || read.has(prop),
+});
+```
 
 ### `caligula/selector`
 
@@ -105,6 +116,6 @@ The first call in a fresh process runs about 2–3× slower while the JIT warms 
 
 ## Limitations
 
-- **Filter only.** It can remove rules and at-rules and rewrite selectors. It can't edit or remove individual declarations or insert nodes.
+- **Filter only.** It can remove rules, at-rules and declarations, and rewrite selectors. It can't edit declarations or insert nodes.
 - **No input source map chaining.** It maps to the CSS it was given, not through a previous map.
-- **Declaration values are only readable under `readDecls` at-rules.** That keeps the fail-safe check ahead of the visitors.
+- **Declaration values are only read under `readDecls` at-rules, or everywhere when `decl` is set.** That keeps the fail-safe check ahead of the visitors, and costs nothing when no visitor needs them.
