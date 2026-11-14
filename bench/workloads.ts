@@ -84,6 +84,8 @@ for (const { name, css, keep, keepClass } of CORPORA) {
       return !light;
     },
   });
+  add("visitor keeps every declaration", { decl: () => undefined }, false);
+  add("remove declarations", { decl: ({ prop }) => prop !== "color" }, true);
   add("remove most rules + source map", { rule: removeMost, map: true }, true);
   WORKLOADS.push({
     group,
