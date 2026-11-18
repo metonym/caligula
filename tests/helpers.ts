@@ -151,8 +151,7 @@ export const SCENARIOS: Record<string, Scenario> = {
 };
 
 type Outcome =
-  | { ok: true; css: string; removed: number; calls: string[] }
-  | { ok: false };
+  { ok: true; css: string; removed: number; calls: string[] } | { ok: false };
 
 export function reference(source: string, scenario: Scenario): Outcome {
   const calls: string[] = [];

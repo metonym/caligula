@@ -11,9 +11,12 @@ bun ci
 bun run test          # unit, PostCSS parity, hostile inputs, fuzzer
 bun run test:package  # build, pack, install, and use it as a consumer would
 bun run typecheck
-bun run lint          # biome; `bun run lint:fix` formats and applies fixes
+bun fmt --check       # `bun fmt` formats
+bun lint              # `bun run lint:all` formats and applies fixes
 bun run build         # dist/: minified ESM, index.d.ts, slimmed package.json
 ```
+
+`bun fmt` and `bun lint` are in Bun canary builds only until 1.4.5 ships (`bun upgrade --canary`), so CI installs canary. Their config is the `[fmt]` and `[lint]` sections of [`bunfig.toml`](bunfig.toml). The recommended rules are on by default, and the extra rules there are errors. Warnings also fail. `bun fmt` leaves Markdown and YAML alone.
 
 ## How it works
 
@@ -89,13 +92,13 @@ Pitfalls seen before:
 
 ## Style
 
-- Match the surrounding code: TypeScript, biome formatting, plain-sentence comments at a similar density. Comments say what the code does and why, not how it relates to PostCSS's source.
+- Match the surrounding code: TypeScript, `bun fmt` formatting, plain-sentence comments at a similar density. Comments say what the code does and why, not how it relates to PostCSS's source.
 - Conventional commits, as in the history: `feat`, `fix`, `perf`, `refactor`, `bench`, `test`, `docs`, with `!` for breaking changes. Put measured numbers in the body of `perf:` commits.
 - Update the README when behavior, options or benchmark numbers change.
 
 ## Before you finish
 
-- [ ] `bun run lint`, `bun run typecheck`, `bun run test` and `bun run test:package` pass.
+- [ ] `bun fmt --check`, `bun lint`, `bun run typecheck`, `bun run test` and `bun run test:package` pass.
 - [ ] Parser or visitor changes: the 20-seed long fuzz passes, and a hostile case covers the change.
 - [ ] `src/` changes: `bun run bench:ab` and `bun run bench:ab:mem` show no confirmed regression.
 - [ ] The README and this guide still describe what the code does.

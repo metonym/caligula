@@ -40,14 +40,14 @@ for (const { name, css, keep, keepClass } of CORPORA) {
       filterCss(css, { rule });
     });
     task("postcss + discard-empty", () => {
-      postcssFilter.process(css, { from: undefined }).css;
+      void postcssFilter.process(css, { from: undefined }).css;
     });
     task("lightningcss (JS visitor)", () => {
       transform({
         filename: "in.css",
         code,
         errorRecovery: true,
-        // biome-ignore lint/suspicious/noExplicitAny: visitor types are generic over custom at-rules
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- visitor types are generic over custom at-rules
         visitor: lightningVisitor as any,
       });
     });
@@ -62,7 +62,7 @@ for (const { name, css, keep, keepClass } of CORPORA) {
         from: "in.css",
         map: { inline: false, annotation: false },
       });
-      result.css;
+      void result.css;
       result.map.toJSON();
     });
   });

@@ -115,7 +115,7 @@ test(`fuzz (seed ${SEED}, ${RUNS} sheets)`, () => {
     " A",
   ];
 
-  let divergesFromPostcss = false;
+  let divergesFromPostcss: boolean;
   const EMPTY_VALUES = new Set(["", " ", "!important"]);
 
   const comment = () => (chance(0.06) ? pick(COMMENTS) : "");

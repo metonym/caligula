@@ -21,7 +21,7 @@ import {
 } from "./chars";
 import type { Combinator, Compound, ParsedSelector } from "./index.js";
 
-export type { Combinator, Compound, ParsedSelector } from "./index.js";
+export type { Combinator, Compound, ParsedSelector };
 
 const EMPTY: readonly string[] = Object.freeze([]);
 
@@ -426,7 +426,7 @@ function parsed(text: string, compounds: Compound[]): ParsedSelector {
  */
 export function splitSelectorList(list: string): string[] {
   const selectors: string[] = [];
-  for (let from = 0; ; ) {
+  for (let from = 0; ;) {
     const to = selectorEnd(list, from);
     const text = trimmed(list, from, to);
     if (text !== "") selectors.push(text);
@@ -438,7 +438,7 @@ export function splitSelectorList(list: string): string[] {
 /** Parses each selector in a list; `splitSelectorList` then `parseSelector`, in one pass. */
 export function parseSelectorList(list: string): ParsedSelector[] {
   const selectors: ParsedSelector[] = [];
-  for (let from = 0; ; ) {
+  for (let from = 0; ;) {
     const compounds = complex(list, from, 0);
     const to = end;
     const text = trimmed(list, from, to);
