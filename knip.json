@@ -12,5 +12,6 @@
     "scripts/**/*.ts",
     "bench/**/*.ts",
     "tests/**/*.ts"
-  ]
+  ],
+  "ignoreBinaries": ["lint"]
 }
