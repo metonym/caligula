@@ -266,7 +266,8 @@ function pseudoKind(s: string, from: number, to: number): number {
   }
   if (isNamed(s, from, to, "not")) return P_NOT;
   for (let k = 0; k < IS_NAMES.length; k++) {
-    if (isNamed(s, from, to, IS_NAMES[k])) return P_IS;
+    const name = IS_NAMES[k];
+    if (name !== undefined && isNamed(s, from, to, name)) return P_IS;
   }
   return P_OTHER;
 }
@@ -389,9 +390,9 @@ function complex(s: string, i: number, depth: number): Compound[] {
 function list(s: string, i: number, depth: number): Compound[] {
   const subjects: Compound[] = [];
   for (;;) {
-    const compounds = complex(s, i, depth);
+    const subject = complex(s, i, depth).at(-1);
     i = end;
-    subjects.push(compounds[compounds.length - 1]);
+    if (subject) subjects.push(subject);
     if (at(s, i) !== COMMA) break;
     i++;
   }
@@ -420,11 +421,14 @@ function trimmed(s: string, from: number, to: number): string {
 }
 
 function parsed(text: string, compounds: Compound[]): ParsedSelector {
+  // `complex` always ends with a compound, so this never throws.
+  const subject = compounds.at(-1);
+  if (!subject) throw new Error(`no compound in the selector ${text}`);
   return {
     text,
     compounds,
     combinators: combinatorsOut,
-    subject: compounds[compounds.length - 1],
+    subject,
   };
 }
 

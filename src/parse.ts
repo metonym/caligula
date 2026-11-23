@@ -227,8 +227,8 @@ export class Parser {
     const first = this.skipTrivia(0, this.count);
     const last = this.trimTrivia(first, this.count);
     if (first < last) {
-      node.textStart = this.starts[first];
-      node.textEnd = this.ends[last - 1];
+      node.textStart = this.starts[first] ?? 0;
+      node.textEnd = this.ends[last - 1] ?? 0;
       node.text = this.cleanText(first, last);
     }
 
@@ -299,8 +299,8 @@ export class Parser {
     if (last === 0) {
       node.start = node.textStart = node.textEnd = this.scanner.from;
     } else {
-      node.start = node.textStart = this.starts[0];
-      node.textEnd = this.ends[last - 1];
+      node.start = node.textStart = this.starts[0] ?? 0;
+      node.textEnd = this.ends[last - 1] ?? 0;
       node.text = this.cleanText(0, last);
     }
     this.open(node);
@@ -340,9 +340,9 @@ export class Parser {
 
     const last =
       semi || custom ? this.count : this.trimTrivia(colon + 1, this.count);
-    const end = ends[last - 1];
+    const end = ends[last - 1] ?? 0;
 
-    let valueStart = ends[colon];
+    let valueStart = ends[colon] ?? 0;
     let valueEnd = end;
     let text: string | null = null;
     if (this.readValues || this.container.readDecls) {
@@ -357,7 +357,7 @@ export class Parser {
     }
     const index = this.decls.push(
       start,
-      ends[0],
+      ends[0] ?? 0,
       valueStart,
       valueEnd,
       end,
@@ -394,8 +394,15 @@ export class Parser {
 
     if (last === first) first = from;
     if (!custom && last > first && kinds[last - 1] === T_SPACE) last--;
-    if (last === first) return [ends[from - 1], ends[from - 1], null];
-    return [starts[first], ends[last - 1], this.cleanText(first, last)];
+    if (last === first) {
+      const at = ends[from - 1] ?? 0;
+      return [at, at, null];
+    }
+    return [
+      starts[first] ?? 0,
+      ends[last - 1] ?? 0,
+      this.cleanText(first, last),
+    ];
   }
 
   private barewordImportant(first: number, to: number, steps: number): number {

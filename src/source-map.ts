@@ -45,7 +45,7 @@ export class SourceMapBuilder {
       let digit = vlq & 31;
       vlq >>>= 5;
       if (vlq > 0) digit |= 32;
-      bytes[this.length++] = BASE64[digit];
+      bytes[this.length++] = BASE64[digit] ?? 0;
     } while (vlq > 0);
   }
 

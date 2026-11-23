@@ -42,7 +42,7 @@ export const T_CLOSE_CURLY = 12;
 export const T_COLON = 13;
 export const T_SEMICOLON = 14;
 
-export function isTrivia(kind: number): boolean {
+export function isTrivia(kind: number | undefined): boolean {
   return kind === T_SPACE || kind === T_COMMENT;
 }
 
