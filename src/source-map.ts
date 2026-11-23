@@ -52,20 +52,21 @@ export class SourceMapBuilder {
   private segment(offset: number): void {
     const starts = this.lineStarts;
     let lo = this.srcLineHint;
-    if (starts[lo] <= offset) {
-      while (lo + 1 < starts.length && starts[lo + 1] <= offset) lo++;
+    if ((starts[lo] ?? Infinity) <= offset) {
+      while (lo + 1 < starts.length && (starts[lo + 1] ?? Infinity) <= offset)
+        lo++;
     } else {
       lo = 0;
       let hi = starts.length - 1;
       while (lo < hi) {
         const mid = (lo + hi + 1) >> 1;
-        if (starts[mid] <= offset) lo = mid;
+        if ((starts[mid] ?? Infinity) <= offset) lo = mid;
         else hi = mid - 1;
       }
     }
     this.srcLineHint = lo;
     const srcLine = lo;
-    const srcColumn = offset - starts[lo];
+    const srcColumn = offset - (starts[lo] ?? 0);
 
     this.reserve(29);
     if (!this.lineEmpty) this.bytes[this.length++] = COMMA;

@@ -55,12 +55,12 @@ export class Emitter {
     const declsRemoved = decls.removed > 0;
     let keptCount = 0;
     let last = -1;
-    for (let k = 0; k < nodes.length; k++) {
-      const node = nodes[k];
+    for (const node of nodes) {
       if (typeof node === "number") {
-        if (declsRemoved && (decls.flags[node] & D_REMOVED) !== 0) {
+        const flags = decls.flags[node] ?? 0;
+        if (declsRemoved && (flags & D_REMOVED) !== 0) {
           // Its trailing comments stay, as nodes that end the container.
-          if ((decls.flags[node] & D_COMMENTS) !== 0) keptCount++;
+          if ((flags & D_COMMENTS) !== 0) keptCount++;
           continue;
         }
         last = keptCount;
@@ -76,29 +76,34 @@ export class Emitter {
     let inheritTo = -1;
     if (container.type === N_ROOT && nodes.length > 1) {
       const first = nodes[0];
-      if (typeof first !== "number") {
+      if (typeof first === "object") {
         if (first.removed) {
           inheritFrom = first.before;
           inheritTo = first.start;
         }
-      } else if (declsRemoved && (decls.flags[first] & D_REMOVED) !== 0) {
-        inheritFrom = (decls.before as Int32Array)[first];
-        inheritTo = decls.start[first];
+      } else if (
+        first !== undefined &&
+        declsRemoved &&
+        ((decls.flags[first] ?? 0) & D_REMOVED) !== 0
+      ) {
+        inheritFrom = (decls.before as Int32Array)[first] ?? -1;
+        inheritTo = decls.start[first] ?? -1;
       }
     }
 
     let i = 0;
     for (let k = 0; k < nodes.length; k++) {
       const node = nodes[k];
+      if (node === undefined) continue;
       if (typeof node === "number") {
-        if (declsRemoved && (decls.flags[node] & D_REMOVED) !== 0) {
+        if (declsRemoved && ((decls.flags[node] ?? 0) & D_REMOVED) !== 0) {
           // A comment after it that becomes the root's first node inherits
           // the first node's leading whitespace in place of its own.
           if (i !== 0 || container.type !== N_ROOT) {
             this.skipDecl(node, -1, -1);
           } else if (k === 0) {
             const before = decls.before as Int32Array;
-            this.skipDecl(node, before[node], decls.start[node]);
+            this.skipDecl(node, before[node] ?? -1, decls.start[node] ?? -1);
           } else {
             this.skipDecl(node, inheritFrom, inheritTo);
           }
@@ -113,17 +118,18 @@ export class Emitter {
 
       if (inheritFrom !== -1 && i === 0) {
         this.copy(inheritFrom, inheritTo);
-        this.cursor = typeof node === "number" ? decls.start[node] : node.start;
+        this.cursor =
+          typeof node === "number" ? (decls.start[node] ?? 0) : node.start;
       }
       const semicolon = i !== last || container.semicolon;
       const hasNext = i < keptCount - 1;
 
       if (typeof node === "number") {
-        const flags = decls.flags[node];
+        const flags = decls.flags[node] ?? 0;
         // A custom property keeps its `;` before a following node.
         const forced = (flags & D_CUSTOM) !== 0;
         this.semicolon(
-          decls.end[node],
+          decls.end[node] ?? 0,
           (flags & D_SEMI) !== 0,
           semicolon || (forced && hasNext),
         );
@@ -150,13 +156,14 @@ export class Emitter {
    */
   private skipDecl(i: number, from: number, to: number): void {
     const decls = this.decls;
-    const flags = decls.flags[i];
-    this.flush((decls.before as Int32Array)[i]);
+    const flags = decls.flags[i] ?? 0;
+    const end = decls.end[i] ?? 0;
+    this.flush((decls.before as Int32Array)[i] ?? 0);
     if (from !== -1 && (flags & D_COMMENTS) !== 0) {
       this.copy(from, to);
-      this.cursor = skipSpace(this.css, decls.end[i]);
+      this.cursor = skipSpace(this.css, end);
     } else {
-      this.cursor = decls.end[i] + ((flags & D_SEMI) !== 0 ? 1 : 0);
+      this.cursor = end + ((flags & D_SEMI) !== 0 ? 1 : 0);
     }
   }
 

@@ -140,8 +140,7 @@ class Filter {
     if (node.removed || nodes === null) return;
     // Declarations are only walked once: nothing marks them dirty.
     const decl = all ? this.options.decl : undefined;
-    for (let i = 0; i < nodes.length; i++) {
-      const child = nodes[i];
+    for (const child of nodes) {
       if (typeof child === "number") {
         if (decl) this.visitDecl(node, child, decl);
         continue;
@@ -197,7 +196,7 @@ class Filter {
         css.slice(decls.valueStart[index], decls.valueEnd[index]),
     });
     if (result === false) {
-      decls.flags[index] |= D_REMOVED;
+      decls.flags[index] = (decls.flags[index] ?? 0) | D_REMOVED;
       decls.removed++;
       this.removed++;
       markDirty(parent);
@@ -209,10 +208,12 @@ class Filter {
     callback: (prop: string, value: string) => void,
   ): void {
     const { css, decls } = this;
-    for (let i = 0; i < nodes.length; i++) {
-      const child = nodes[i];
+    for (const child of nodes) {
       if (typeof child === "number") {
-        if (decls.removed > 0 && (decls.flags[child] & D_REMOVED) !== 0) {
+        if (
+          decls.removed > 0 &&
+          ((decls.flags[child] ?? 0) & D_REMOVED) !== 0
+        ) {
           continue;
         }
         callback(
@@ -267,13 +268,13 @@ class EmptyDiscarder {
     const nodes = node.nodes as Child[];
     const declsRemoved = this.decls.removed > 0;
     let kept = 0;
-    for (let i = 0; i < nodes.length; i++) {
-      const child = nodes[i];
+    for (const child of nodes) {
       if (typeof child === "number") {
         // Its trailing comments stay, and keep the container.
         if (
           declsRemoved &&
-          (this.decls.flags[child] & (D_REMOVED | D_COMMENTS)) === D_REMOVED
+          ((this.decls.flags[child] ?? 0) & (D_REMOVED | D_COMMENTS)) ===
+            D_REMOVED
         ) {
           continue;
         }
@@ -331,7 +332,7 @@ class EmptyDiscarder {
   private declare(layer: string, name: string): void {
     const scopes = this.scopes;
     let scope = scopes[scopes.length - 1];
-    if (scope === null) {
+    if (!scope) {
       scope = new Set();
       scopes[scopes.length - 1] = scope;
     }

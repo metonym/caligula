@@ -54,7 +54,10 @@ const C_GROUP_UNSAFE = 16;
 
 const CLASS = new Uint8Array(128);
 const classify = (chars: string, flag: number) => {
-  for (const c of chars) CLASS[c.charCodeAt(0)] |= flag;
+  for (const c of chars) {
+    const code = c.charCodeAt(0);
+    CLASS[code] = (CLASS[code] ?? 0) | flag;
+  }
 };
 classify(" \n\t\r\f", C_SPACE | C_WORD_END | C_NAME_END);
 classify("!\"#'():;@[\\]{}/", C_WORD_END);
@@ -63,7 +66,7 @@ classify("0123456789abcdefABCDEF", C_HEX);
 classify("\r\n\"'(/\\", C_GROUP_UNSAFE);
 
 function has(code: number, flag: number): boolean {
-  return code < 128 && (CLASS[code] & flag) !== 0;
+  return code < 128 && ((CLASS[code] ?? 0) & flag) !== 0;
 }
 
 function isEscaped(css: string, at: number): boolean {

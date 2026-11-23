@@ -52,7 +52,7 @@ function at(s: string, i: number): number {
 }
 
 function isName(code: number): boolean {
-  return code < 128 ? code >= 0 && (KIND[code] & NAME) !== 0 : true;
+  return code < 128 ? code >= 0 && ((KIND[code] ?? 0) & NAME) !== 0 : true;
 }
 
 function isNameStart(code: number): boolean {
@@ -115,7 +115,7 @@ function nameCharsEnd(s: string, i: number): number {
   const length = s.length;
   while (i < length) {
     const code = s.charCodeAt(i);
-    if (code < 128 && (KIND[code] & NAME) === 0) break;
+    if (code < 128 && ((KIND[code] ?? 0) & NAME) === 0) break;
     i++;
   }
   return i;
@@ -232,8 +232,7 @@ function addClass(classes: string[] | null, name: string): string[] {
     return created;
   }
   // Lengths first: faster than `includes` on freshly sliced names.
-  for (let k = 0; k < classes.length; k++) {
-    const other = classes[k];
+  for (const other of classes) {
     if (other.length === name.length && other === name) return classes;
   }
   classes.push(name);
@@ -345,22 +344,21 @@ function complex(s: string, i: number, depth: number): Compound[] {
       if (kind === P_NOT) {
         const branches = list(s, i, depth + 1);
         i = end;
-        for (let b = 0; b < branches.length; b++) {
-          const required = branches[b].classes;
-          for (let c = 0; c < required.length; c++) {
-            negated = addClass(negated, required[c]);
+        for (const branch of branches) {
+          for (const name of branch.classes) {
+            negated = addClass(negated, name);
           }
         }
       } else if (kind === P_IS) {
         const branches = list(s, i, depth + 1);
         i = end;
-        const first = branches[0].classes;
-        for (let c = 0; c < first.length; c++) {
+        const first = branches[0]?.classes ?? [];
+        for (const name of first) {
           let everyBranch = true;
           for (let b = 1; b < branches.length && everyBranch; b++) {
-            everyBranch = branches[b].classes.includes(first[c]);
+            everyBranch = branches[b]?.classes.includes(name) ?? false;
           }
-          if (everyBranch) classes = addClass(classes, first[c]);
+          if (everyBranch) classes = addClass(classes, name);
         }
       } else {
         // `:has()` is about other elements; the rest name no classes.
@@ -489,10 +487,8 @@ export function requiredClasses(
     typeof selector === "string" ? parseSelector(selector) : selector;
   const { prefix } = options;
   const classes: string[] = [];
-  for (let i = 0; i < compounds.length; i++) {
-    const names = compounds[i].classes;
-    for (let j = 0; j < names.length; j++) {
-      const name = names[j];
+  for (const compound of compounds) {
+    for (const name of compound.classes) {
       if (prefix !== undefined && !name.startsWith(prefix)) continue;
       if (!classes.includes(name)) classes.push(name);
     }

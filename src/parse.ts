@@ -314,7 +314,7 @@ export class Parser {
 
     if (kinds[0] !== T_WORD) bail();
     for (let i = 1; i < colon; i++) if (!isTrivia(kinds[i])) bail();
-    let start = starts[0];
+    let start = starts[0] ?? 0;
     const hack = css.charCodeAt(start);
     if (hack === STAR || hack === UNDERSCORE) start++;
 
@@ -329,7 +329,7 @@ export class Parser {
           parens === 0 &&
           !(
             kinds[i - 1] === T_WORD &&
-            ends[i - 1] - starts[i - 1] === 6 &&
+            (ends[i - 1] ?? 0) - (starts[i - 1] ?? 0) === 6 &&
             css.startsWith("progid", starts[i - 1])
           )
         ) {
@@ -434,8 +434,8 @@ export class Parser {
       ) {
         continue;
       }
-      const from = starts[i];
-      const to = ends[i];
+      const from = starts[i] ?? 0;
+      const to = ends[i] ?? 0;
       if (to > from) {
         text += css.slice(from, to);
         lastCode = css.charCodeAt(to - 1);
