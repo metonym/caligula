@@ -89,7 +89,7 @@ export class Scanner {
   css: string;
   length: number;
   pos: number;
-  kind = T_EOF;
+  kind: number = T_EOF;
   from: number;
   to: number;
   // `(` opens an unquoted `url(...)` if the word it pops is `url`.

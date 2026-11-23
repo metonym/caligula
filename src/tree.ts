@@ -11,7 +11,7 @@ type NodeType =
   | typeof N_AT_STATEMENT
   | typeof N_COMMENT;
 
-export const BAIL = Symbol("bail");
+export const BAIL: unique symbol = Symbol("bail");
 
 export function bail(): never {
   throw BAIL;
@@ -135,7 +135,7 @@ export class Decls {
   end: Int32Array;
   flags: Uint8Array;
   /** Comment-stripped values, only for declarations that had comments. */
-  text = new Map<number, string>();
+  text: Map<number, string> = new Map<number, string>();
   count = 0;
   /**
    * Start of each declaration's leading whitespace, as `CssNode#before`.
