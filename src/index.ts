@@ -6,6 +6,7 @@ import { SourceMapBuilder } from "./source-map";
 import {
   BAIL,
   type Child,
+  childrenOf,
   type CssNode,
   D_COMMENTS,
   D_REMOVED,
@@ -265,7 +266,7 @@ class EmptyDiscarder {
    * are kept.
    */
   children(node: CssNode, layer: string): number {
-    const nodes = node.nodes as Child[];
+    const nodes = childrenOf(node);
     const declsRemoved = this.decls.removed > 0;
     let kept = 0;
     for (const child of nodes) {

@@ -1,7 +1,7 @@
 import { CR, FF, LF, SPACE, TAB } from "./chars";
 import type { SourceMapBuilder } from "./source-map";
 import {
-  type Child,
+  childrenOf,
   type CssNode,
   D_COMMENTS,
   D_CUSTOM,
@@ -50,7 +50,7 @@ export class Emitter {
   }
 
   private body(container: CssNode): void {
-    const nodes = container.nodes as Child[];
+    const nodes = childrenOf(container);
     const decls = this.decls;
     const declsRemoved = decls.removed > 0;
     let keptCount = 0;
@@ -86,7 +86,7 @@ export class Emitter {
         declsRemoved &&
         ((decls.flags[first] ?? 0) & D_REMOVED) !== 0
       ) {
-        inheritFrom = (decls.before as Int32Array)[first] ?? -1;
+        inheritFrom = decls.before?.[first] ?? -1;
         inheritTo = decls.start[first] ?? -1;
       }
     }
@@ -102,8 +102,11 @@ export class Emitter {
           if (i !== 0 || container.type !== N_ROOT) {
             this.skipDecl(node, -1, -1);
           } else if (k === 0) {
-            const before = decls.before as Int32Array;
-            this.skipDecl(node, before[node] ?? -1, decls.start[node] ?? -1);
+            this.skipDecl(
+              node,
+              decls.before?.[node] ?? -1,
+              decls.start[node] ?? -1,
+            );
           } else {
             this.skipDecl(node, inheritFrom, inheritTo);
           }
@@ -136,7 +139,7 @@ export class Emitter {
       } else if (node.type === N_RULE) {
         if (node.rewritten) {
           this.flush(node.textStart);
-          this.insert(node.text as string, node.textStart);
+          this.insert(node.text ?? "", node.textStart);
           this.cursor = node.textEnd;
         }
         this.body(node);
@@ -158,7 +161,7 @@ export class Emitter {
     const decls = this.decls;
     const flags = decls.flags[i] ?? 0;
     const end = decls.end[i] ?? 0;
-    this.flush((decls.before as Int32Array)[i] ?? 0);
+    this.flush(decls.before?.[i] ?? 0);
     if (from !== -1 && (flags & D_COMMENTS) !== 0) {
       this.copy(from, to);
       this.cursor = skipSpace(this.css, end);

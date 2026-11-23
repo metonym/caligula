@@ -96,7 +96,8 @@ function readEscape(s: string, i: number): string {
   let to = from;
   while (to < s.length && to - from < 6 && isHex(s.charCodeAt(to))) to++;
   if (to === from) {
-    const point = s.codePointAt(from) as number;
+    // invariant: an escape has a character after its `\`; else U+FFFD, as CSS.
+    const point = s.codePointAt(from) ?? 0xfffd;
     end = from + (point > 0xffff ? 2 : 1);
     return String.fromCodePoint(point);
   }
@@ -319,7 +320,7 @@ function complex(s: string, i: number, depth: number): Compound[] {
         // it is the implicit `&`.
         compounds.push(compound(null, null));
       }
-      combinator = s[i - 1] as Combinator;
+      combinator = code === GREATER ? ">" : code === PLUS ? "+" : "~";
       continue;
     }
 

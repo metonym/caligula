@@ -27,6 +27,7 @@ import {
 import {
   bail,
   type Child,
+  childrenOf,
   CssNode,
   D_COMMENTS,
   D_CUSTOM,
@@ -111,7 +112,7 @@ export class Parser {
   }
 
   private add(child: Child): void {
-    (this.container.nodes as Child[]).push(child);
+    childrenOf(this.container).push(child);
   }
 
   private open(node: CssNode): void {
@@ -134,7 +135,7 @@ export class Parser {
   }
 
   private seal(node: CssNode, end: number): void {
-    if ((node.nodes as Child[]).length > 0) node.semicolon = this.semicolon;
+    if (childrenOf(node).length > 0) node.semicolon = this.semicolon;
     node.end = end;
   }
 
@@ -148,7 +149,7 @@ export class Parser {
   }
 
   private straySemicolon(): void {
-    const nodes = this.container.nodes as Child[];
+    const nodes = childrenOf(this.container);
     const last = nodes[nodes.length - 1];
     if (typeof last === "object" && last.type === N_RULE && !last.semi) {
       last.semi = true;

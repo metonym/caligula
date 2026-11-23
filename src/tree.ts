@@ -119,21 +119,33 @@ export const D_REMOVED = 4;
  */
 export const D_COMMENTS = 8;
 
-export function grow<T extends Uint8Array | Int32Array>(array: T): T {
-  const next = new (array.constructor as new (size: number) => T)(
-    array.length * 2,
-  );
+export function grow(array: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer>;
+export function grow(array: Int32Array<ArrayBuffer>): Int32Array<ArrayBuffer>;
+export function grow(
+  array: Uint8Array<ArrayBuffer> | Int32Array<ArrayBuffer>,
+): Uint8Array<ArrayBuffer> | Int32Array<ArrayBuffer> {
+  const next =
+    array instanceof Int32Array
+      ? new Int32Array(array.length * 2)
+      : new Uint8Array(array.length * 2);
   next.set(array);
   return next;
 }
 
+// A container's children. A leaf has none, so asking is a bug.
+export function childrenOf(node: CssNode): Child[] {
+  const { nodes } = node;
+  if (nodes === null) throw new Error(`node type ${node.type} has no children`);
+  return nodes;
+}
+
 export class Decls {
-  start: Int32Array;
-  propEnd: Int32Array;
-  valueStart: Int32Array;
-  valueEnd: Int32Array;
-  end: Int32Array;
-  flags: Uint8Array;
+  start: Int32Array<ArrayBuffer>;
+  propEnd: Int32Array<ArrayBuffer>;
+  valueStart: Int32Array<ArrayBuffer>;
+  valueEnd: Int32Array<ArrayBuffer>;
+  end: Int32Array<ArrayBuffer>;
+  flags: Uint8Array<ArrayBuffer>;
   /** Comment-stripped values, only for declarations that had comments. */
   text: Map<number, string> = new Map<number, string>();
   count = 0;
@@ -141,7 +153,7 @@ export class Decls {
    * Start of each declaration's leading whitespace, as `CssNode#before`.
    * Only kept for a `decl` visitor, which is all that removes declarations.
    */
-  before: Int32Array | null = null;
+  before: Int32Array<ArrayBuffer> | null = null;
   /** Declarations a `decl` visitor removed. */
   removed = 0;
 
