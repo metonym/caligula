@@ -113,7 +113,10 @@ export class CssNode {
 export const D_SEMI = 1;
 export const D_CUSTOM = 2;
 export const D_REMOVED = 4;
-/** Comments follow the value before `}`: PostCSS reads them as comment nodes. */
+/**
+ * Comments follow the value before `}`: PostCSS reads them as comment
+ * nodes.
+ */
 export const D_COMMENTS = 8;
 
 export function grow<T extends Uint8Array | Int32Array>(array: T): T {

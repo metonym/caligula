@@ -25,7 +25,10 @@ export type { Combinator, Compound, ParsedSelector };
 
 const EMPTY: readonly string[] = Object.freeze([]);
 
-/** `:is()` inside `:not()` inside …: deeper arguments are skipped, not read. */
+/**
+ * `:is()` inside `:not()` inside …: deeper arguments are skipped, not
+ * read.
+ */
 const MAX_DEPTH = 32;
 
 // Character classes below U+0080 (0 for the rest); everything above is a
@@ -41,8 +44,9 @@ KIND[0x5f] = NAME_START;
 KIND[DASH] = NAME;
 for (const c of [0x20, 0x09, 0x0a, 0x0d, 0x0c]) KIND[c] = WHITESPACE;
 
-// Reading past the end with `charCodeAt` returns `NaN`, which makes the JIT
-// drop its fast path, so reads that can run off the end go through `at`.
+// Reading past the end with `charCodeAt` returns `NaN`, which makes the
+// JIT drop its fast path, so reads that can run off the end go through
+// `at`.
 function at(s: string, i: number): number {
   return i < s.length ? s.charCodeAt(i) : -1;
 }
@@ -82,7 +86,8 @@ function isIdentStart(s: string, i: number): boolean {
   return isNameStart(next) || next === DASH || isEscape(s, i + 1);
 }
 
-// Where the last `readEscape`, `readName` or `complex` call stopped reading.
+// Where the last `readEscape`, `readName` or `complex` call stopped
+// reading.
 let end = 0;
 
 /** The character the escape at `i` stands for. */
@@ -272,8 +277,8 @@ let combinatorsOut: Combinator[] = [];
 
 /**
  * Reads one complex selector at `i`, up to a comma, the end, or (in an
- * argument list, `depth > 0`) the closing parenthesis. Returns its compounds;
- * `combinatorsOut` holds the combinators between them.
+ * argument list, `depth > 0`) the closing parenthesis. Returns its
+ * compounds; `combinatorsOut` holds the combinators between them.
  */
 function complex(s: string, i: number, depth: number): Compound[] {
   const compounds: Compound[] = [];
@@ -379,7 +384,10 @@ function complex(s: string, i: number, depth: number): Compound[] {
   return compounds;
 }
 
-/** Reads a selector list argument at `i` and its `)`, returning each branch's subject. */
+/**
+ * Reads a selector list argument at `i` and its `)`, returning each
+ * branch's subject.
+ */
 function list(s: string, i: number, depth: number): Compound[] {
   const subjects: Compound[] = [];
   for (;;) {
@@ -393,7 +401,10 @@ function list(s: string, i: number, depth: number): Compound[] {
   return subjects;
 }
 
-/** `s[from, to)` without surrounding whitespace, keeping an escaped trailing space. */
+/**
+ * `s[from, to)` without surrounding whitespace, keeping an escaped
+ * trailing space.
+ */
 function trimmed(s: string, from: number, to: number): string {
   while (from < to && isWhitespace(s.charCodeAt(from))) from++;
   while (to > from && isWhitespace(s.charCodeAt(to - 1))) {
@@ -420,9 +431,9 @@ function parsed(text: string, compounds: Compound[]): ParsedSelector {
 }
 
 /**
- * Splits a selector list on its top-level commas: not those in parentheses,
- * attribute selectors, strings or comments. Selectors come back trimmed;
- * empty ones are dropped.
+ * Splits a selector list on its top-level commas: not those in
+ * parentheses, attribute selectors, strings or comments. Selectors come
+ * back trimmed; empty ones are dropped.
  */
 export function splitSelectorList(list: string): string[] {
   const selectors: string[] = [];
@@ -435,7 +446,10 @@ export function splitSelectorList(list: string): string[] {
   }
 }
 
-/** Parses each selector in a list; `splitSelectorList` then `parseSelector`, in one pass. */
+/**
+ * Parses each selector in a list; `splitSelectorList` then
+ * `parseSelector`, in one pass.
+ */
 export function parseSelectorList(list: string): ParsedSelector[] {
   const selectors: ParsedSelector[] = [];
   for (let from = 0; ;) {

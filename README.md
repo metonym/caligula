@@ -1,10 +1,14 @@
-<img alt="Caligula logo, portrait bust of emperor Caligula" src="https://raw.githubusercontent.com/metonym/caligula/master/artwork/caligula-logo.jpg" width="200" />
+<img alt="Caligula logo, portrait bust of emperor Caligula" src="https://raw.githubusercontent.com/metonym/caligula/13130b36b9ae3e6253eda21a40d6d02304f13e37/artwork/caligula-logo.jpg" width="200" />
 
 # caligula
 
-> Zero-dependency CSS filter. PostCSS-identical output, 6–13× faster.
+Zero-dependency CSS filter with PostCSS-identical output, 6–13× faster.
 
-Remove rules, at-rules and declarations, or rewrite selectors, with PostCSS-style visitors. caligula edits the source text instead of building an AST, so its output is byte-identical to the same visitors run as a PostCSS plugin (with `postcss-discard-empty`), at a fraction of the cost.
+Remove rules, at-rules and declarations, or rewrite selectors,
+with PostCSS-style visitors.
+caligula edits the source text instead of building an AST,
+so its output is byte-identical to the same visitors run as a PostCSS
+plugin (with `postcss-discard-empty`), at a fraction of the cost.
 
 ```sh
 bun i caligula
@@ -34,11 +38,19 @@ const { css, map, removed, skipped } = filterCss(source, {
 | `discardEmpty` | Drop containers left with no children, like `postcss-discard-empty`. Default `true`. |
 | `map` | `true` or `{ source, includeContent }` returns a v3 source map. |
 
-`selector`, `params` and declaration values read exactly as PostCSS's `rule.selector`, `atRule.params` and `decl.value` would: comments dropped per PostCSS's `raw()` rule, `!important` stripped. Visitors run in PostCSS's order, and a rule whose selector was rewritten, or that lost a declaration, is visited again, as PostCSS's `Rule` visitor would be. Each declaration is visited once.
+`selector`, `params` and declaration values read exactly as PostCSS's
+`rule.selector`, `atRule.params` and `decl.value` would:
+comments dropped per PostCSS's `raw()` rule, `!important` stripped.
+Visitors run in PostCSS's order, and a rule whose selector was
+rewritten, or that lost a declaration, is visited again,
+as PostCSS's `Rule` visitor would be.
+Each declaration is visited once.
 
-To list selectors without changing anything, return nothing from `rule` and check `skipped`.
+To list selectors without changing anything,
+return nothing from `rule` and check `skipped`.
 
-To drop custom properties nothing reads, run it twice: once to prune rules, then again with `decl` over the result.
+To drop custom properties nothing reads, run it twice:
+once to prune rules, then again with `decl` over the result.
 
 ```ts
 const { css: pruned } = filterCss(source, { rule });
@@ -50,7 +62,8 @@ const { css } = filterCss(pruned, {
 
 ### `caligula/selector`
 
-Selector utilities for deciding what to keep, without a CSS parser of your own.
+Selector utilities for deciding what to keep,
+without a CSS parser of your own.
 
 ```ts
 import {
@@ -77,24 +90,55 @@ requiredClasses(".bx--a .x > .bx--b", { prefix: "bx--" }); // ["bx--a", "bx--b"]
 | `parseSelectorList(list)` | `parseSelector` for each selector in a list, in one pass. |
 | `requiredClasses(selector, { prefix? })` | Every class the selector requires, across its compounds, deduplicated; `prefix` keeps only those that start with it. |
 
-A compound's `classes` are what an element must have to match: its own `.a`, plus the classes every branch of an `:is()`/`:where()` (and `:matches()`, `:-webkit-any()`, `:-moz-any()`) requires. Classes in `:has()` are on other elements and aren't listed; those in `:not()` are listed in `negated`. Names are unescaped (`.sm\:p-4` is `sm:p-4`). A leading combinator (`> .a` in nested CSS) gets an empty compound before it. Malformed selectors parse as far as they make sense; nothing but `parseSelector` on a list throws.
+A compound's `classes` are what an element must have to match:
+its own `.a`, plus the classes every branch of an `:is()`/`:where()`
+(and `:matches()`, `:-webkit-any()`, `:-moz-any()`) requires.
+Classes in `:has()` are on other elements and aren't listed;
+those in `:not()` are listed in `negated`.
+Names are unescaped (`.sm\:p-4` is `sm:p-4`).
+A leading combinator (`> .a` in nested CSS) gets an empty compound
+before it.
+Malformed selectors parse as far as they make sense;
+nothing but `parseSelector` on a list throws.
 
 ## Features
 
-- **PostCSS parity.** For every input it doesn't skip, the output equals `postcss([visitors, discardEmpty()]).process(css).css`, and visitors see the same strings in the same order. It's tested on Bootstrap, Carbon, Tailwind v4-style output and modern syntax (nesting, `@layer`, `@container`, `@scope`, `@property`), and by a differential fuzzer that also compares visitor calls and declaration values.
-- **6–13× faster than PostCSS.** No value parsing and no re-printing: kept text is copied from the source.
-- **Source maps.** Optional v3 maps for the output.
-- **No-op is the identity.** With no visitor changes, the output is the input, byte for byte.
-- **Fail-safe.** A syntax error, nesting deeper than 1,000 blocks, or anything else it can't reproduce exactly returns the input unchanged with `skipped: true`, before any visitor runs.
-- **Small and portable.** No dependencies, no Node APIs, ~7 kB gzipped.
+- **PostCSS parity.**
+  For every input it doesn't skip, the output equals
+  `postcss([visitors, discardEmpty()]).process(css).css`,
+  and visitors see the same strings in the same order.
+  It's tested on Bootstrap, Carbon, Tailwind v4-style output
+  and modern syntax
+  (nesting, `@layer`, `@container`, `@scope`, `@property`),
+  and by a differential fuzzer that also compares visitor calls
+  and declaration values.
+- **6–13× faster than PostCSS.**
+  No value parsing and no re-printing:
+  kept text is copied from the source.
+- **Source maps.**
+  Optional v3 maps for the output.
+- **No-op is the identity.**
+  With no visitor changes, the output is the input, byte for byte.
+- **Fail-safe.**
+  A syntax error, nesting deeper than 1,000 blocks,
+  or anything else it can't reproduce exactly returns the input
+  unchanged with `skipped: true`, before any visitor runs.
+- **Small and portable.**
+  No dependencies, no Node APIs, ~7 kB gzipped.
 - **Deliberate differences from PostCSS:**
   - `<` is never escaped.
-  - A reversed BOM (U+FFFE) is left as-is; PostCSS rewrites it to U+FEFF.
-  - `postcss-discard-empty`'s extra deletions (empty declarations, rules with an empty selector in the source, paramless `@foo;`) aren't reproduced. A rule a visitor rewrites to `""` is dropped, as PostCSS does.
+  - A reversed BOM (U+FFFE) is left as-is;
+    PostCSS rewrites it to U+FEFF.
+  - `postcss-discard-empty`'s extra deletions
+    (empty declarations, rules with an empty selector in the source,
+    paramless `@foo;`) aren't reproduced.
+    A rule a visitor rewrites to `""` is dropped, as PostCSS does.
 
 ## Benchmarks
 
-Apple M2, medians of warm calls. The filter job drops every rule whose selector names none of a few kept classes.
+Apple M2, medians of warm calls.
+The filter job drops every rule whose selector names none of a few kept
+classes.
 
 | Stylesheet | Job | caligula | PostCSS | Lightning CSS[^lightning] |
 |:---|:---|:---|:---|:---|
@@ -110,12 +154,20 @@ Apple M2, medians of warm calls. The filter job drops every rule whose selector 
 | Tailwind v4-shaped utilities, 145 kB | filter | **0.77 ms** | 5.8 ms (7.6×) | 13.9 ms (18×) |
 | | round trip | **0.82 ms** | 6.3 ms (7.7×) | 4.3 ms (5.2×) |
 
-The first call in a fresh process runs about 2–3× slower while the JIT warms up (Carbon: 9.5 ms). Peak memory is about 3–7× the input size.
+The first call in a fresh process runs about 2–3× slower
+while the JIT warms up (Carbon: 9.5 ms).
+Peak memory is about 3–7× the input size.
 
 [^lightning]: Lightning CSS does a different job: it re-prints the stylesheet (so it doesn't preserve the source) and can do much more (minify, lower syntax, bundle). Its filter runs a JS visitor; its round trip is native only.
 
 ## Limitations
 
-- **Filter only.** It can remove rules, at-rules and declarations, and rewrite selectors. It can't edit declarations or insert nodes.
-- **No input source map chaining.** It maps to the CSS it was given, not through a previous map.
-- **Declaration values are only read under `readDecls` at-rules, or everywhere when `decl` is set.** That keeps the fail-safe check ahead of the visitors, and costs nothing when no visitor needs them.
+- **Filter only.**
+  It can remove rules, at-rules and declarations, and rewrite selectors.
+  It can't edit declarations or insert nodes.
+- **No input source map chaining.**
+  It maps to the CSS it was given, not through a previous map.
+- **Declaration values are only read under `readDecls` at-rules,
+  or everywhere when `decl` is set.**
+  That keeps the fail-safe check ahead of the visitors,
+  and costs nothing when no visitor needs them.

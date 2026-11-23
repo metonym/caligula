@@ -1,52 +1,26 @@
 {
   "name": "caligula",
   "version": "0.4.0",
+  "description": "Zero-dependency CSS filter with PostCSS-identical output, 6\u201313\u00d7 faster.",
   "license": "MIT",
-  "description": "Zero-dependency CSS filter: remove rules and declarations and rewrite selectors with PostCSS-identical output, 6-13x faster than PostCSS.",
   "author": "Eric Liu (https://github.com/metonym)",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "scripts": {
-    "build": "bun scripts/build.ts",
-    "test": "bun test --parallel ./tests",
-    "test:package": "bun scripts/test-package.ts",
-    "bench": "ostia bench bench/filter.bench.ts",
-    "bench:caligula": "ostia bench bench/caligula.bench.ts",
-    "bench:ab": "ostia ab bench/caligula.bench.ts",
-    "bench:ab:mem": "ostia ab bench/caligula.bench.ts --peak-mem --mem-threshold 20 --filter ^memory",
-    "bench:mem": "ostia bench bench/caligula.bench.ts --peak-mem --filter ^memory",
-    "bench:cold": "bun bench/cold.ts",
-    "typecheck": "bun check",
-    "lint:all": "bun fmt && bun lint --fix",
-    "lint:changed": "bun fmt --staged && bun lint --staged --fix",
-    "knip": "knip-bun"
-  },
-  "devDependencies": {
-    "@types/bun": "^1.4.4",
-    "@types/jest": "^30.0.0",
-    "@typescript/typescript6": "^6.0.2",
-    "bootstrap": "5.3.8",
-    "carbon-components-svelte": "0.113.1",
-    "knip": "^6.43.0",
-    "lightningcss": "1.33.0",
-    "ostia": "^0.2.12",
-    "postcss": "^8.5.31",
-    "postcss-discard-empty": "^9.0.8",
-    "source-map-js": "^1.2.2"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/metonym/caligula.git"
   },
-  "keywords": [
-    "css",
-    "postcss",
-    "filter",
-    "purge",
-    "unused-css",
-    "source-map",
-    "zero-dependency"
-  ]
+  "homepage": "https://github.com/metonym/caligula",
+  "bugs": "https://github.com/metonym/caligula/issues",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./selector": {
+      "types": "./selector.d.ts",
+      "default": "./selector.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false
 }

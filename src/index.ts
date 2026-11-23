@@ -15,7 +15,10 @@ import {
   N_RULE,
 } from "./tree";
 
-/** Joins two compounds: descendant, child, next sibling, subsequent sibling. */
+/**
+ * Joins two compounds: descendant, child, next sibling, subsequent
+ * sibling.
+ */
 export type Combinator = " " | ">" | "+" | "~";
 
 export type Compound = {
@@ -61,7 +64,10 @@ export type FilterOptions = {
   decl?: (decl: { prop: string; value: string }) => boolean | undefined;
   /** At-rule names whose declarations `atRule` reads with `walkDecls`. */
   readDecls?: readonly string[];
-  /** Drop rules and at-rules left empty, like `postcss-discard-empty`. Default `true`. */
+  /**
+   * Drop rules and at-rules left empty, like `postcss-discard-empty`.
+   * Default `true`.
+   */
   discardEmpty?: boolean;
   map?: boolean | { source?: string; includeContent?: boolean };
 };
@@ -76,7 +82,10 @@ export type SourceMap = {
 
 export type FilterResult = {
   css: string;
-  /** The input was returned unchanged: a syntax error, or CSS caligula can't reproduce exactly. */
+  /**
+   * The input was returned unchanged: a syntax error, or CSS caligula can't
+   * reproduce exactly.
+   */
   skipped: boolean;
   /** Rules, at-rules and declarations the visitors removed. */
   removed: number;
@@ -250,7 +259,10 @@ class EmptyDiscarder {
     this.decls = decls;
   }
 
-  /** Visits the children of `node`, inside layer `layer`; returns how many are kept. */
+  /**
+   * Visits the children of `node`, inside layer `layer`; returns how many
+   * are kept.
+   */
   children(node: CssNode, layer: string): number {
     const nodes = node.nodes as Child[];
     const declsRemoved = this.decls.removed > 0;
